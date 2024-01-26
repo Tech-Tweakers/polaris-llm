@@ -65,7 +65,7 @@ After training, use the inference.py script for generating text:
 python inference.py
 ```
 
-# Dataset and Vocabulary
+## Dataset and Vocabulary
 
 The dataset file used for training **must be the same file** to be used for the Vocabulary. The Vocabulary is generated from the dataset file and is used to encode the text data into integers. If you train the model on one dataset and then try to use a different Vocabulary for inference, the model will not be able to decode the text data.
 
