@@ -201,7 +201,7 @@ if __name__ == "__main__":
     #
     
     try:
-        lines = open('input-03.txt', 'r').read()
+        lines = open('input.txt', 'r').read()
     except FileNotFoundError:
         print("Input file not found.")
         exit(1)
@@ -228,7 +228,7 @@ if __name__ == "__main__":
     # Load Model
     #
     
-    model_path = "llama_model-03.pth"
+    model_path = "llama_model.pth"
     try:
         model = Llama(MASTER_CONFIG)
         model.load_state_dict(torch.load(model_path))
