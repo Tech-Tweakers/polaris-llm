@@ -7,28 +7,6 @@ from datetime import datetime
 import time
 
 #
-# Utility Functions
-#
-
-def get_rotary_matrix(context_window, embedding_dim):
-    """
-    Generate a rotary positional encoding matrix.
-    :param context_window: The size of the context window.
-    :param embedding_dim: The dimension of the embeddings.
-    :return: A rotary positional encoding matrix.
-    """
-    R = torch.zeros((context_window, embedding_dim, embedding_dim), requires_grad=False)
-    for position in range(context_window):
-        for i in range(embedding_dim // 2):
-            theta = 10000. ** (-2. * (i - 1) / embedding_dim)
-            m_theta = position * theta
-            R[position, 2 * i, 2 * i] = np.cos(m_theta)
-            R[position, 2 * i, 2 * i + 1] = -np.sin(m_theta)
-            R[position, 2 * i + 1, 2 * i] = np.sin(m_theta)
-            R[position, 2 * i + 1, 2 * i + 1] = np.cos(m_theta)
-    return R
-
-#
 # Model Components
 #
 
@@ -48,6 +26,24 @@ class SwiGLU(nn.Module):
     def forward(self, x): 
         swish_gate = self.linear_gate(x) * torch.sigmoid(self.beta * self.linear_gate(x))
         return swish_gate * self.linear(x)
+
+def get_rotary_matrix(context_window, embedding_dim):
+    """
+    Generate a rotary positional encoding matrix.
+    :param context_window: The size of the context window.
+    :param embedding_dim: The dimension of the embeddings.
+    :return: A rotary positional encoding matrix.
+    """
+    R = torch.zeros((context_window, embedding_dim, embedding_dim), requires_grad=False)
+    for position in range(context_window):
+        for i in range(embedding_dim // 2):
+            theta = 10000. ** (-2. * (i - 1) / embedding_dim)
+            m_theta = position * theta
+            R[position, 2 * i, 2 * i] = np.cos(m_theta)
+            R[position, 2 * i, 2 * i + 1] = -np.sin(m_theta)
+            R[position, 2 * i + 1, 2 * i] = np.sin(m_theta)
+            R[position, 2 * i + 1, 2 * i + 1] = np.cos(m_theta)
+    return R
 
 class RoPEMaskedAttentionHead(nn.Module):
     """
@@ -182,7 +178,6 @@ def generate(model, config, max_new_tokens=30):
     print()  # New line after progress bar
     return [decode(x, itos) for x in idx.tolist()]
 
-# Progress Bar Function
 def progress_bar(current, total, bar_length=50):
     """
     Display a progress bar.
@@ -206,9 +201,9 @@ if __name__ == "__main__":
     #
     
     try:
-        lines = open('input.txt', 'r').read()
+        lines = open('input-03.txt', 'r').read()
     except FileNotFoundError:
-        print("File 'input.txt' not found.")
+        print("Input file not found.")
         exit(1)
 
     vocab = sorted(list(set(lines)))
@@ -233,7 +228,7 @@ if __name__ == "__main__":
     # Load Model
     #
     
-    model_path = "llama_model.pth"
+    model_path = "llama_model-03.pth"
     try:
         model = Llama(MASTER_CONFIG)
         model.load_state_dict(torch.load(model_path))
@@ -246,9 +241,12 @@ if __name__ == "__main__":
     #
 
     current_date = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    
     print(f"Polaris LLM Inferencer v0.1.0")
     print(f"Inference started: {current_date}")
+
     generated_text = generate(model, MASTER_CONFIG, 300)
     print(generated_text[0])
+
     print(f"\nInference finished: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
 

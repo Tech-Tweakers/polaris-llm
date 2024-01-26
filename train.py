@@ -15,7 +15,7 @@ print("------------------------------------------")
 print(f"Training started: {current_date}")
 print("")
 
-lines = open('txai.txt', 'r').read()
+lines = open('input.txt', 'r').read()
 
 vocab = sorted(list(set(lines)))
 itos = {i:ch for i, ch in enumerate(vocab)}
@@ -131,7 +131,7 @@ xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFI
 logits, loss = model(xs, ys)
 
 MASTER_CONFIG.update({
-    'epochs': 1000,
+    'epochs': 5000,
     'log_interval': 10,
     'batch_size': 32,
 })
@@ -146,7 +146,7 @@ optimizer = torch.optim.Adam(
     model.parameters(), 
 )
 
-def train(model, optimizer, scheduler=None, config=MASTER_CONFIG, print_logs=False):
+def train(model, optimizer, scheduler=None, config=MASTER_CONFIG, print_logs=True):
     losses = []
     start_time = time.time()
     print("Training function started at:", datetime.now())
@@ -740,12 +740,12 @@ optimizer = torch.optim.Adam(model.parameters())
 train(model, optimizer)
 
 MASTER_CONFIG.update({
-    "epochs": 5000,
+    "epochs": 15000,
     "log_interval": 10,
 })
 
 print("### MASTER_CONFIG RopeModel 02 ###")
-print(config)
+print(MASTER_CONFIG)
 print("###")
 
 train(model, optimizer)
@@ -908,8 +908,13 @@ optimizer = torch.optim.Adam(llama.parameters())
 train(llama, optimizer, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
-    'epochs': 10000,
+    'epochs': 30000,
 })
+
+print("### MASTER_CONFIG Epochs ###")
+print(MASTER_CONFIG)
+print("###")
+
 train(llama, optimizer, scheduler=None, config=MASTER_CONFIG)
 
 train(llama, optimizer, config=MASTER_CONFIG)
