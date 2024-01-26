@@ -6,7 +6,10 @@ import numpy as np
 from datetime import datetime
 import time
 
+#
 # Utility Functions
+#
+
 def get_rotary_matrix(context_window, embedding_dim):
     """
     Generate a rotary positional encoding matrix.
@@ -34,7 +37,10 @@ def decode(ids, itos):
     """
     return ''.join([itos[i] for i in ids])
 
+#
 # Model Components
+#
+
 class SwiGLU(nn.Module):
     """
     Swish-Gated Linear Unit
@@ -159,6 +165,10 @@ class Llama(nn.Module):
             loss = F.cross_entropy(logits.view(-1, self.config['vocab_size']), targets.view(-1))
             return logits, loss
 
+#
+# Text generation tools
+#
+
 def generate(model, config, max_new_tokens=30):
     idx = torch.zeros(5, 1).long()
     for i in range(max_new_tokens):
@@ -185,9 +195,16 @@ def progress_bar(current, total, bar_length=50):
     padding = int(bar_length - len(arrow)) * " "
     print(f"\rGenerating: [{arrow}{padding}] {int(fraction * 100)}%", end='')
 
+#
 # Main Execution
+#
+
 if __name__ == "__main__":
+    
+    #
     # Load vocabulary
+    #
+    
     try:
         lines = open('txai.txt', 'r').read()
     except FileNotFoundError:
@@ -197,8 +214,11 @@ if __name__ == "__main__":
     vocab = sorted(list(set(lines)))
     stoi = {ch: i for i, ch in enumerate(vocab)}
     itos = {i: ch for i, ch in enumerate(vocab)}
-
+    
+    #
     # Configuration
+    #
+    
     MASTER_CONFIG = {
         'vocab_size': len(vocab),
         'batch_size': 10,
@@ -207,10 +227,12 @@ if __name__ == "__main__":
         'n_heads': 8,
         'n_layers': 2
     }
-
     config = MASTER_CONFIG
-
+    
+    #
     # Load Model
+    #
+    
     model_path = "llama_model.pth"
     try:
         model = Llama(MASTER_CONFIG)
@@ -218,8 +240,11 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error loading model: {e}")
         exit(1)
+    
+    #
+    # Run Text Generation
+    #
 
-    # Generation
     current_date = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     print(f"Polaris LLM Inferencer v0.1.0")
     print(f"Inference started: {current_date}")
