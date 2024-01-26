@@ -911,7 +911,7 @@ MASTER_CONFIG.update({
     'epochs': 30000,
 })
 
-print("### MASTER_CONFIG Epochs ###")
+print("### MASTER_CONFIG Training Llama ###")
 print(MASTER_CONFIG)
 print("###")
 
