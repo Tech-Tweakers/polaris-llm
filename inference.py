@@ -28,15 +28,6 @@ def get_rotary_matrix(context_window, embedding_dim):
             R[position, 2 * i + 1, 2 * i + 1] = np.cos(m_theta)
     return R
 
-def decode(ids, itos):
-    """
-    Convert a list of ids to text using the inverse token mapping.
-    :param ids: List of token ids.
-    :param itos: Inverse token mapping dictionary.
-    :return: Decoded string.
-    """
-    return ''.join([itos[i] for i in ids])
-
 #
 # Model Components
 #
@@ -169,6 +160,15 @@ class Llama(nn.Module):
 # Text generation tools
 #
 
+def decode(ids, itos):
+    """
+    Convert a list of ids to text using the inverse token mapping.
+    :param ids: List of token ids.
+    :param itos: Inverse token mapping dictionary.
+    :return: Decoded string.
+    """
+    return ''.join([itos[i] for i in ids])
+
 def generate(model, config, max_new_tokens=30):
     idx = torch.zeros(5, 1).long()
     for i in range(max_new_tokens):
@@ -206,9 +206,9 @@ if __name__ == "__main__":
     #
     
     try:
-        lines = open('txai.txt', 'r').read()
+        lines = open('input.txt', 'r').read()
     except FileNotFoundError:
-        print("File 'txai.txt' not found.")
+        print("File 'input.txt' not found.")
         exit(1)
 
     vocab = sorted(list(set(lines)))
@@ -248,7 +248,7 @@ if __name__ == "__main__":
     current_date = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     print(f"Polaris LLM Inferencer v0.1.0")
     print(f"Inference started: {current_date}")
-    generated_text = generate(model, MASTER_CONFIG, 100)
+    generated_text = generate(model, MASTER_CONFIG, 300)
     print(generated_text[0])
     print(f"\nInference finished: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
 

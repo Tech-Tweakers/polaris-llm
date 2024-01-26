@@ -15,7 +15,7 @@
 
 # About
 
-Polaris LLM is a custom language model developed using PyTorch. This project encompasses scripts for training the model on a character-level dataset and executing inference with the trained model. The development of Polaris LLM serves educational purposes and is inspired by the [Llama from Scratch](https://blog.briankitano.com/llama-from-scratch/) blog post by Brian Kitano.
+Polaris LLM is a custom language model developed using PyTorch. This project encompasses scripts for training the model on a character-level dataset and executing inference with the trained model. The development of Polaris LLM serves educational purposes and is based and inspired by the [Llama from Scratch](https://blog.briankitano.com/llama-from-scratch/) blog post by Brian Kitano.
 
 ## Overview
 
@@ -52,7 +52,6 @@ cd Polaris-llm
 ```bash
 python train.py
 ```
-The training process outputs model checkpoints saved as .pth files.
 
 ### Inference
 
@@ -65,7 +64,10 @@ After training, use the inference.py script for generating text:
 ```bash
 python inference.py
 ```
-You can modify the input_text variable in the script to change the input for the model.
+
+# Dataset and Vocabulary
+
+The dataset file used for training **must be the same file** to be used for the Vocabulary. The Vocabulary is generated from the dataset file and is used to encode the text data into integers. If you train the model on one dataset and then try to use a different Vocabulary for inference, the model will not be able to decode the text data.
 
 ## Components
 
@@ -87,6 +89,7 @@ You can customize various aspects of the training and inference process:
 
 - **Model Parameters**: Adjust the **MASTER_CONFIG** in both scripts to change model dimensions, layer counts, etc.
 - **Dataset**: Replace **input.txt** with your dataset file for training on different text data.
+- **Vocabulary**: The same file used for the dataset should be used for the Vocabulary creation.
 
 ## Contributing
 
