@@ -1,0 +1,229 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from collections import OrderedDict
+import numpy as np
+from datetime import datetime
+import time
+
+# Utility Functions
+def get_rotary_matrix(context_window, embedding_dim):
+    """
+    Generate a rotary positional encoding matrix.
+    :param context_window: The size of the context window.
+    :param embedding_dim: The dimension of the embeddings.
+    :return: A rotary positional encoding matrix.
+    """
+    R = torch.zeros((context_window, embedding_dim, embedding_dim), requires_grad=False)
+    for position in range(context_window):
+        for i in range(embedding_dim // 2):
+            theta = 10000. ** (-2. * (i - 1) / embedding_dim)
+            m_theta = position * theta
+            R[position, 2 * i, 2 * i] = np.cos(m_theta)
+            R[position, 2 * i, 2 * i + 1] = -np.sin(m_theta)
+            R[position, 2 * i + 1, 2 * i] = np.sin(m_theta)
+            R[position, 2 * i + 1, 2 * i + 1] = np.cos(m_theta)
+    return R
+
+def decode(ids, itos):
+    """
+    Convert a list of ids to text using the inverse token mapping.
+    :param ids: List of token ids.
+    :param itos: Inverse token mapping dictionary.
+    :return: Decoded string.
+    """
+    return ''.join([itos[i] for i in ids])
+
+# Model Components
+class SwiGLU(nn.Module):
+    """
+    Swish-Gated Linear Unit
+    https://arxiv.org/pdf/2002.05202v1.pdf
+    Implements the SwiGLU activation function.
+    """
+    def __init__(self, size):
+        super().__init__()
+        self.config = config
+        self.linear_gate = nn.Linear(size, size)
+        self.linear = nn.Linear(size, size)
+        self.beta = nn.Parameter(torch.ones(1))
+
+    def forward(self, x): 
+        swish_gate = self.linear_gate(x) * torch.sigmoid(self.beta * self.linear_gate(x))
+        return swish_gate * self.linear(x)
+
+class RoPEMaskedAttentionHead(nn.Module):
+    """
+    Rotary Positional Encoding Masked Attention Head.
+    Implements an attention head with RoPE.
+    """
+    def __init__(self, config):
+        super().__init__()
+        self.config = config
+        self.w_q = nn.Linear(config['d_model'], config['d_model'], bias=False)
+        self.w_k = nn.Linear(config['d_model'], config['d_model'], bias=False)
+        self.w_v = nn.Linear(config['d_model'], config['d_model'], bias=False)
+        self.R = get_rotary_matrix(config['context_window'], config['d_model'])
+
+    def forward(self, x, return_attn_weights=False):
+        b, m, d = x.shape
+        q = self.w_q(x)
+        k = self.w_k(x)
+        v = self.w_v(x)
+        q_rotated = (torch.bmm(q.transpose(0, 1), self.R[:m])).transpose(0, 1)
+        k_rotated = (torch.bmm(k.transpose(0, 1), self.R[:m])).transpose(0, 1)
+        activations = F.scaled_dot_product_attention(q_rotated, k_rotated, v, dropout_p=0.1, is_causal=True)
+        if return_attn_weights:
+            attn_mask = torch.tril(torch.ones((m, m)), diagonal=0)
+            attn_weights = torch.bmm(q_rotated, k_rotated.transpose(1, 2)) / np.sqrt(d) + attn_mask
+            attn_weights = F.softmax(attn_weights, dim=-1)
+            return activations, attn_weights
+        return activations
+
+class RoPEMaskedMultiheadAttention(nn.Module):
+    """
+    Rotary Positional Encoding Masked Multihead Attention.
+    Implements multihead attention with RoPE.
+    """
+    def __init__(self, config):
+        super().__init__()
+        self.config = config
+        self.heads = nn.ModuleList([RoPEMaskedAttentionHead(config) for _ in range(config['n_heads'])])
+        self.linear = nn.Linear(config['n_heads'] * config['d_model'], config['d_model'])
+        self.dropout = nn.Dropout(0.1)
+
+    def forward(self, x):
+        heads = [h(x) for h in self.heads]
+        x = torch.cat(heads, dim=-1)
+        x = self.linear(x)
+        return self.dropout(x)
+
+class RMSNorm(nn.Module):
+    """
+    Root Mean Square Layer Normalization.
+    """
+    def __init__(self, layer_shape, eps=1e-8):
+        super(RMSNorm, self).__init__()
+        self.scale = nn.Parameter(torch.ones(layer_shape))
+
+    def forward(self, x):
+        ff_rms = torch.linalg.norm(x, dim=(1, 2)) * x[0].numel() ** -0.5
+        return self.scale[:x.shape[1], :].unsqueeze(0) * (x / ff_rms.unsqueeze(-1).unsqueeze(-1))
+
+class LlamaBlock(nn.Module):
+    """
+    Llama Transformer Block.
+    A single transformer block in Llama model.
+    """
+    def __init__(self, config):
+        super().__init__()
+        self.config = config
+        self.rms = RMSNorm((config['context_window'], config['d_model']))
+        self.attention = RoPEMaskedMultiheadAttention(config)
+        self.feedforward = nn.Sequential(
+            nn.Linear(config['d_model'], config['d_model']),
+            SwiGLU(config['d_model']),
+        )
+
+    def forward(self, x):
+        x = self.rms(x)  # RMS pre-normalization
+        x = x + self.attention(x)
+        x = self.rms(x)  # RMS pre-normalization
+        return x + self.feedforward(x)
+
+class Llama(nn.Module):
+    """
+    Llama Language Model.
+    Implements the full Llama language model architecture.
+    """
+    def __init__(self, config):
+        super().__init__()
+        self.config = config
+        self.embeddings = nn.Embedding(config['vocab_size'], config['d_model'])
+        self.llama_blocks = nn.Sequential(
+            OrderedDict([(f"llama_{i}", LlamaBlock(config)) for i in range(config['n_layers'])])
+        )
+        self.ffn = nn.Sequential(
+            nn.Linear(config['d_model'], config['d_model']),
+            SwiGLU(config['d_model']),
+            nn.Linear(config['d_model'], config['vocab_size']),
+        )
+
+    def forward(self, idx, targets=None):
+        x = self.embeddings(idx)
+        x = self.llama_blocks(x)
+        logits = self.ffn(x)
+        if targets is None:
+            return logits
+        else:
+            loss = F.cross_entropy(logits.view(-1, self.config['vocab_size']), targets.view(-1))
+            return logits, loss
+
+def generate(model, config, max_new_tokens=30):
+    idx = torch.zeros(5, 1).long()
+    for i in range(max_new_tokens):
+        progress_bar(i + 1, max_new_tokens)  # Update progress bar
+        logits = model(idx[:, -config['context_window']:])
+        last_time_step_logits = logits[:, -1, :]
+        p = F.softmax(last_time_step_logits, dim=-1)
+        idx_next = torch.multinomial(p, num_samples=1)
+        idx = torch.cat([idx, idx_next], dim=-1)
+        time.sleep(0.1)  # Just for visual effect
+    print()  # New line after progress bar
+    return [decode(x, itos) for x in idx.tolist()]
+
+# Progress Bar Function
+def progress_bar(current, total, bar_length=50):
+    """
+    Display a progress bar.
+    :param current: Current progress.
+    :param total: Total steps.
+    :param bar_length: Length of the progress bar.
+    """
+    fraction = current / total
+    arrow = int(fraction * bar_length - 1) * "=" + ">"
+    padding = int(bar_length - len(arrow)) * " "
+    print(f"\rGenerating: [{arrow}{padding}] {int(fraction * 100)}%", end='')
+
+# Main Execution
+if __name__ == "__main__":
+    # Load vocabulary
+    try:
+        lines = open('txai.txt', 'r').read()
+    except FileNotFoundError:
+        print("File 'txai.txt' not found.")
+        exit(1)
+
+    vocab = sorted(list(set(lines)))
+    stoi = {ch: i for i, ch in enumerate(vocab)}
+    itos = {i: ch for i, ch in enumerate(vocab)}
+
+    # Configuration
+    MASTER_CONFIG = {
+        'vocab_size': len(vocab),
+        'batch_size': 10,
+        'context_window': 8,
+        'd_model': 256,
+        'n_heads': 8,
+        'n_layers': 2
+    }
+
+    config = MASTER_CONFIG
+
+    # Load Model
+    model_path = "llama_model.pth"
+    try:
+        model = Llama(MASTER_CONFIG)
+        model.load_state_dict(torch.load(model_path))
+    except Exception as e:
+        print(f"Error loading model: {e}")
+        exit(1)
+
+    # Generation
+    current_date = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+    print(f"Polaris LLM Inferencer v0.1.0")
+    print(f"Inference started: {current_date}")
+    generated_text = generate(model, MASTER_CONFIG, 100)
+    print(generated_text[0])
+    print(f"\nInference finished: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
+
