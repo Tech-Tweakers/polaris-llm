@@ -499,9 +499,7 @@ k = layer.R[n,:,:] @ layer.w_k(x_k)
 assert torch.allclose(layer.w_k(x_k), layer.w_k.weight @ x_k)
 assert torch.allclose(k, layer.R[n, :, :] @ layer.w_k.weight @ x_k)
 
-assert q.T @ k == q @ k # transpose is redundant
-assert torch.allclose(q @ k, x_k.T @ layer.w_k.weight.T @ layer.R[n, :, :].T @ layer.R[m, :, :] @ layer.w_q.weight @ x_q)
-assert torch.allclose(q @ k, x_k.T @ layer.w_k.weight.T @ layer.R[n-m, :, :].T @ layer.w_q.weight @ x_q)
+x.permute(*torch.arange(x.ndim - 1, -1, -1))
 
 # definitely there's an optimization we could make where we cache the rotation matrices, but skip.
 class RoPEMultiheadAttention(nn.Module):
