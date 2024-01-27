@@ -19,9 +19,9 @@ Polaris LLM is a custom language model developed using PyTorch. This project enc
 
 # Latest Inference
 
-![Original Input](docs/original-input.png)
+- Original Input & Latest Inference
 
-![Latest Inference](docs/latest-inference.png)
+![Original Input](docs/original-input.png) ![Latest Inference](docs/latest-inference.png)
 
 ## Overview
 
