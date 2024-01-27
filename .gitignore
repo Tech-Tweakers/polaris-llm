@@ -31,7 +31,9 @@ txai.txt
 tmp*
 *tmp*
 tmp*
+tokenizer.model
 input.txt
+input*
 *.pth
 MANIFEST
 

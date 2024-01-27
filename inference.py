@@ -4,29 +4,27 @@ import torch.nn.functional as F
 from collections import OrderedDict
 import numpy as np
 from datetime import datetime
-import time
+import argparse
+
+class Colors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    RED = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 
 #
-# Utility Functions
+# Start
 #
 
-def get_rotary_matrix(context_window, embedding_dim):
-    """
-    Generate a rotary positional encoding matrix.
-    :param context_window: The size of the context window.
-    :param embedding_dim: The dimension of the embeddings.
-    :return: A rotary positional encoding matrix.
-    """
-    R = torch.zeros((context_window, embedding_dim, embedding_dim), requires_grad=False)
-    for position in range(context_window):
-        for i in range(embedding_dim // 2):
-            theta = 10000. ** (-2. * (i - 1) / embedding_dim)
-            m_theta = position * theta
-            R[position, 2 * i, 2 * i] = np.cos(m_theta)
-            R[position, 2 * i, 2 * i + 1] = -np.sin(m_theta)
-            R[position, 2 * i + 1, 2 * i] = np.sin(m_theta)
-            R[position, 2 * i + 1, 2 * i + 1] = np.cos(m_theta)
-    return R
+current_date = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+
+print(Colors.BOLD)
+print(f"Polaris LLM Inferencer v0.1.0")
+print(f"Inference started: {current_date}")
 
 #
 # Model Components
@@ -48,6 +46,24 @@ class SwiGLU(nn.Module):
     def forward(self, x): 
         swish_gate = self.linear_gate(x) * torch.sigmoid(self.beta * self.linear_gate(x))
         return swish_gate * self.linear(x)
+
+def get_rotary_matrix(context_window, embedding_dim):
+    """
+    Generate a rotary positional encoding matrix.
+    :param context_window: The size of the context window.
+    :param embedding_dim: The dimension of the embeddings.
+    :return: A rotary positional encoding matrix.
+    """
+    R = torch.zeros((context_window, embedding_dim, embedding_dim), requires_grad=False)
+    for position in range(context_window):
+        for i in range(embedding_dim // 2):
+            theta = 10000. ** (-2. * (i - 1) / embedding_dim)
+            m_theta = position * theta
+            R[position, 2 * i, 2 * i] = np.cos(m_theta)
+            R[position, 2 * i, 2 * i + 1] = -np.sin(m_theta)
+            R[position, 2 * i + 1, 2 * i] = np.sin(m_theta)
+            R[position, 2 * i + 1, 2 * i + 1] = np.cos(m_theta)
+    return R
 
 class RoPEMaskedAttentionHead(nn.Module):
     """
@@ -178,11 +194,9 @@ def generate(model, config, max_new_tokens=30):
         p = F.softmax(last_time_step_logits, dim=-1)
         idx_next = torch.multinomial(p, num_samples=1)
         idx = torch.cat([idx, idx_next], dim=-1)
-        time.sleep(0.1)  # Just for visual effect
     print()  # New line after progress bar
     return [decode(x, itos) for x in idx.tolist()]
 
-# Progress Bar Function
 def progress_bar(current, total, bar_length=50):
     """
     Display a progress bar.
@@ -200,15 +214,21 @@ def progress_bar(current, total, bar_length=50):
 #
 
 if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(description='Polaris LLM Inferencer')
+    parser.add_argument('--maxtokens', type=int, default=200, help='Maximum new tokens to generate')
+    args = parser.parse_args()
     
     #
     # Load vocabulary
     #
     
     try:
-        lines = open('input.txt', 'r').read()
+        fileOpen = 'input.txt'
+        lines = open(fileOpen, 'r').read()
+        print(Colors.BOLD + f"Loading Vocab: {fileOpen}" + Colors.ENDC)
     except FileNotFoundError:
-        print("File 'input.txt' not found.")
+        print(Colors.RED + "Input/Vocab file not found." + Colors.ENDC)
         exit(1)
 
     vocab = sorted(list(set(lines)))
@@ -221,7 +241,7 @@ if __name__ == "__main__":
     
     MASTER_CONFIG = {
         'vocab_size': len(vocab),
-        'batch_size': 10,
+        'batch_size': 32,
         'context_window': 8,
         'd_model': 256,
         'n_heads': 8,
@@ -235,6 +255,8 @@ if __name__ == "__main__":
     
     model_path = "llama_model.pth"
     try:
+        print(Colors.BOLD + f"Loading Model: {model_path}")
+        print(Colors.ENDC)
         model = Llama(MASTER_CONFIG)
         model.load_state_dict(torch.load(model_path))
     except Exception as e:
@@ -245,10 +267,8 @@ if __name__ == "__main__":
     # Run Text Generation
     #
 
-    current_date = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    print(f"Polaris LLM Inferencer v0.1.0")
-    print(f"Inference started: {current_date}")
-    generated_text = generate(model, MASTER_CONFIG, 300)
+    generated_text = generate(model, MASTER_CONFIG, args.maxtokens)
     print(generated_text[0])
+
     print(f"\nInference finished: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
 
