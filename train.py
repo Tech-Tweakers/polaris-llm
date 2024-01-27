@@ -364,7 +364,7 @@ for i in range(K):
         ax[i, j].set_title(f'rotation at {i * K + j}')
 
 config = {
-    'd_model': 128,
+    'd_model': 256,
     'context_window': 16,
 }
 
@@ -388,7 +388,7 @@ assert torch.isclose(x_m @ x_n, x @ R[n-m,:,:] @ y)
 config = {
     'batch_size': 10,
     'd_model': 512,
-    'n_heads': 8,
+    'n_heads': 16,
     'context_window': 16,
 }
 
@@ -523,7 +523,7 @@ class RoPEMultiheadAttention(nn.Module):
         return x
     
 MASTER_CONFIG.update({
-    'n_heads': 8,
+    'n_heads': 16,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' RoPEAttentionHead 01 ###" + Colors.ENDC)
@@ -592,7 +592,7 @@ train(model, optimizer)
 generate(model, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
-    'n_heads': 8,
+    'n_heads': 16,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' RoPEAttentionHead 02 ###" + Colors.ENDC)
@@ -610,7 +610,7 @@ plt.colorbar()
 config = {
     'batch_size': 10,
     'd_model': 512,
-    'n_heads': 8,
+    'n_heads': 16,
     'context_window': 16,
 }
 
@@ -703,7 +703,7 @@ class RoPEMaskedMultiheadAttention(nn.Module):
         return x
     
 MASTER_CONFIG.update({
-    'n_heads': 8,
+    'n_heads': 16,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' RoPEMultiheadAttention 01 ###" + Colors.ENDC)
@@ -765,7 +765,7 @@ optimizer = torch.optim.Adam(model.parameters())
 train(model, optimizer)
 
 MASTER_CONFIG.update({
-    "epochs": 2000,
+    "epochs": 5000,
     "log_interval": 10,
 })
 
@@ -882,7 +882,7 @@ block(torch.randn(MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'], 
 from collections import OrderedDict
 
 MASTER_CONFIG.update({
-    'n_layers': 2,
+    'n_layers': 4,
 })
 
 class Llama(nn.Module):
@@ -940,7 +940,7 @@ optimizer = torch.optim.Adam(llama.parameters())
 train(llama, optimizer, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
-    'epochs': 4000,
+    'epochs': 10000,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' Llama Train 01 ###" + Colors.ENDC)
