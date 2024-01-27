@@ -17,6 +17,12 @@
 
 Polaris LLM is a custom language model developed using PyTorch. This project encompasses scripts for training the model on a character-level dataset and executing inference with the trained model. The development of Polaris LLM serves educational purposes and is based and inspired by the [Llama from Scratch](https://blog.briankitano.com/llama-from-scratch/) blog post by Brian Kitano.
 
+# Latest Inference
+
+| Original Input | Latest Inference |
+| -------------- | ---------------- |
+| ![Original Input](docs/original-input.png) | ![Latest Inference](docs/latest-inference.png) |
+
 ## Overview
 
 Polaris LLM demonstrates the process of building a language model from the ground up, showcasing the intricacies of model architecture and training. It provides hands-on experience with advanced concepts in natural language processing and deep learning.
@@ -62,7 +68,7 @@ After training, use the inference.py script for generating text:
 2 - Run the inference script:
 
 ```bash
-python inference.py
+python inference.py --maxtokens 500
 ```
 
 ## Dataset and Vocabulary

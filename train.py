@@ -117,7 +117,7 @@ class SimpleBrokenModel(nn.Module):
             return logits
 
 MASTER_CONFIG.update({
-    'd_model': 256,
+    'd_model': 128,
 })
 
 print(Colors.OKGREEN + "### MASTER_CONFIG SimpleBrokenModel 01 ###" + Colors.ENDC)
@@ -131,7 +131,7 @@ xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFI
 logits, loss = model(xs, ys)
 
 MASTER_CONFIG.update({
-    'epochs': 1000,
+    'epochs': 500,
     'log_interval': 10,
     'batch_size': 32,
 })
@@ -364,7 +364,7 @@ for i in range(K):
         ax[i, j].set_title(f'rotation at {i * K + j}')
 
 config = {
-    'd_model': 128,
+    'd_model': 256,
     'context_window': 16,
 }
 
@@ -387,7 +387,7 @@ assert torch.isclose(x_m @ x_n, x @ R[n-m,:,:] @ y)
 
 config = {
     'batch_size': 10,
-    'd_model': 512,
+    'd_model': 256,
     'n_heads': 8,
     'context_window': 16,
 }
@@ -503,6 +503,7 @@ assert q.T @ k == q @ k # transpose is redundant
 assert torch.allclose(q @ k, x_k.T @ layer.w_k.weight.T @ layer.R[n, :, :].T @ layer.R[m, :, :] @ layer.w_q.weight @ x_q)
 assert torch.allclose(q @ k, x_k.T @ layer.w_k.weight.T @ layer.R[n-m, :, :].T @ layer.w_q.weight @ x_q)
 
+
 # definitely there's an optimization we could make where we cache the rotation matrices, but skip.
 class RoPEMultiheadAttention(nn.Module):
     def __init__(self, config):
@@ -611,7 +612,7 @@ plt.colorbar()
 
 config = {
     'batch_size': 10,
-    'd_model': 512,
+    'd_model': 256,
     'n_heads': 8,
     'context_window': 16,
 }
@@ -767,7 +768,7 @@ optimizer = torch.optim.Adam(model.parameters())
 train(model, optimizer)
 
 MASTER_CONFIG.update({
-    "epochs": 2000,
+    "epochs": 1000,
     "log_interval": 10,
 })
 
@@ -942,7 +943,7 @@ optimizer = torch.optim.Adam(llama.parameters())
 train(llama, optimizer, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
-    'epochs': 4000,
+    'epochs': 2000,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' Llama Train 01 ###" + Colors.ENDC)
@@ -956,7 +957,7 @@ train(llama, optimizer, config=MASTER_CONFIG)
 
 llama.save_model("llama_model.pth")
 
-print(generate(llama, MASTER_CONFIG, 100)[0])
+print(generate(llama, MASTER_CONFIG, 200)[0])
 
 xs, ys = get_batches(dataset, 'test', MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'])
 
