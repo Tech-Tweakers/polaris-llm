@@ -117,7 +117,7 @@ class SimpleBrokenModel(nn.Module):
             return logits
 
 MASTER_CONFIG.update({
-    'd_model': 256,
+    'd_model': 128,
 })
 
 print(Colors.OKGREEN + "### MASTER_CONFIG SimpleBrokenModel 01 ###" + Colors.ENDC)
@@ -131,7 +131,7 @@ xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFI
 logits, loss = model(xs, ys)
 
 MASTER_CONFIG.update({
-    'epochs': 1000,
+    'epochs': 500,
     'log_interval': 10,
     'batch_size': 32,
 })
@@ -387,8 +387,8 @@ assert torch.isclose(x_m @ x_n, x @ R[n-m,:,:] @ y)
 
 config = {
     'batch_size': 10,
-    'd_model': 512,
-    'n_heads': 16,
+    'd_model': 256,
+    'n_heads': 8,
     'context_window': 16,
 }
 
@@ -499,7 +499,10 @@ k = layer.R[n,:,:] @ layer.w_k(x_k)
 assert torch.allclose(layer.w_k(x_k), layer.w_k.weight @ x_k)
 assert torch.allclose(k, layer.R[n, :, :] @ layer.w_k.weight @ x_k)
 
-x.permute(*torch.arange(x.ndim - 1, -1, -1))
+assert q.T @ k == q @ k # transpose is redundant
+assert torch.allclose(q @ k, x_k.T @ layer.w_k.weight.T @ layer.R[n, :, :].T @ layer.R[m, :, :] @ layer.w_q.weight @ x_q)
+assert torch.allclose(q @ k, x_k.T @ layer.w_k.weight.T @ layer.R[n-m, :, :].T @ layer.w_q.weight @ x_q)
+
 
 # definitely there's an optimization we could make where we cache the rotation matrices, but skip.
 class RoPEMultiheadAttention(nn.Module):
@@ -523,7 +526,7 @@ class RoPEMultiheadAttention(nn.Module):
         return x
     
 MASTER_CONFIG.update({
-    'n_heads': 16,
+    'n_heads': 8,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' RoPEAttentionHead 01 ###" + Colors.ENDC)
@@ -592,7 +595,7 @@ train(model, optimizer)
 generate(model, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
-    'n_heads': 16,
+    'n_heads': 8,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' RoPEAttentionHead 02 ###" + Colors.ENDC)
@@ -609,8 +612,8 @@ plt.colorbar()
 
 config = {
     'batch_size': 10,
-    'd_model': 512,
-    'n_heads': 16,
+    'd_model': 256,
+    'n_heads': 8,
     'context_window': 16,
 }
 
@@ -703,7 +706,7 @@ class RoPEMaskedMultiheadAttention(nn.Module):
         return x
     
 MASTER_CONFIG.update({
-    'n_heads': 16,
+    'n_heads': 8,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' RoPEMultiheadAttention 01 ###" + Colors.ENDC)
@@ -765,7 +768,7 @@ optimizer = torch.optim.Adam(model.parameters())
 train(model, optimizer)
 
 MASTER_CONFIG.update({
-    "epochs": 5000,
+    "epochs": 1000,
     "log_interval": 10,
 })
 
@@ -882,7 +885,7 @@ block(torch.randn(MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'], 
 from collections import OrderedDict
 
 MASTER_CONFIG.update({
-    'n_layers': 4,
+    'n_layers': 2,
 })
 
 class Llama(nn.Module):
@@ -940,7 +943,7 @@ optimizer = torch.optim.Adam(llama.parameters())
 train(llama, optimizer, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
-    'epochs': 10000,
+    'epochs': 2000,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' Llama Train 01 ###" + Colors.ENDC)
@@ -954,7 +957,7 @@ train(llama, optimizer, config=MASTER_CONFIG)
 
 llama.save_model("llama_model.pth")
 
-print(generate(llama, MASTER_CONFIG, 100)[0])
+print(generate(llama, MASTER_CONFIG, 200)[0])
 
 xs, ys = get_batches(dataset, 'test', MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'])
 
