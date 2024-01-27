@@ -20,9 +20,9 @@ class Colors:
     UNDERLINE = '\033[4m'
 
 print("")
-print(Colors.WARNING + "Polaris LLM Training v0.1.0" + Colors.ENDC)
-print(Colors.WARNING + "------------------------------------------" + Colors.ENDC)
-print(Colors.WARNING + f"Training started: {current_date}" + Colors.ENDC)
+print(Colors.BOLD + "Polaris LLM Training v0.1.0")
+print("------------------------------------------")
+print(f"Training started: {current_date}" + Colors.ENDC)
 print("")
 
 lines = open('input.txt', 'r').read()
@@ -66,8 +66,8 @@ def get_batches(data, split, batch_size, context_window, config=MASTER_CONFIG):
     return x, y
 
 MASTER_CONFIG.update({
-    'batch_size': 16,
-    'context_window': 32
+    'batch_size': 4,
+    'context_window': 8
 })
 
 xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'])
@@ -100,7 +100,7 @@ class SimpleBrokenModel(nn.Module):
             nn.ReLU(),
             nn.Linear(config['d_model'], config['vocab_size']),
         )
-        print(Colors.RED)
+        print(Colors.RED + Colors.BOLD)
         print("model params from SimpleBrokenModel:", sum([m.numel() for m in self.parameters()]))
         print(Colors.ENDC)
 
@@ -117,12 +117,13 @@ class SimpleBrokenModel(nn.Module):
             return logits
 
 MASTER_CONFIG.update({
-    'd_model': 512,
+    'd_model': 256,
 })
 
 print(Colors.OKGREEN + "### MASTER_CONFIG SimpleBrokenModel 01 ###" + Colors.ENDC)
-print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  # Assuming MASTER_CONFIG is a variable
+print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  
 print(Colors.OKGREEN + "###" + Colors.ENDC)
+print("")
 
 model = SimpleBrokenModel(MASTER_CONFIG)
 xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'])
@@ -130,14 +131,15 @@ xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFI
 logits, loss = model(xs, ys)
 
 MASTER_CONFIG.update({
-    'epochs': 100,
-    'log_interval': 5,
+    'epochs': 1000,
+    'log_interval': 10,
     'batch_size': 32,
 })
 
 print(Colors.OKGREEN + "### MASTER_CONFIG SimpleBrokenModel 02 ###" + Colors.ENDC)
-print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  # Assuming MASTER_CONFIG is a variable
+print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  
 print(Colors.OKGREEN + "###" + Colors.ENDC)
+print("")
 
 model = SimpleBrokenModel(MASTER_CONFIG)
 
@@ -201,7 +203,7 @@ class SimpleModel(nn.Module):
             nn.Linear(config['d_model'], config['vocab_size']),
         )
 
-        print(Colors.RED)
+        print(Colors.RED + Colors.BOLD)
         print("model params from SimpleModel:", sum([m.numel() for m in self.parameters()]))
         print(Colors.ENDC)
 
@@ -265,8 +267,9 @@ config = {
 }
 
 print(Colors.OKGREEN + "### 'config' RMSNorm ###" + Colors.ENDC)
-print(Colors.OKGREEN + str(config) + Colors.ENDC)  # Assuming MASTER_CONFIG is a variable
+print(Colors.OKGREEN + str(config) + Colors.ENDC)  
 print(Colors.OKGREEN + "###" + Colors.ENDC)
+print("")
 
 batch = torch.randn((config['batch_size'], config['context_window'], config['d_model']))
 m = RMSNorm((config['context_window'], config['d_model']))
@@ -303,7 +306,7 @@ class SimpleModel_RMS(nn.Module):
             nn.Linear(config['d_model'], config['vocab_size']),
         )
 
-        print(Colors.RED)
+        print(Colors.RED + Colors.BOLD)
         print("model params from SimpleModel_RMS:", sum([m.numel() for m in self.parameters()]))
         print(Colors.ENDC)
 
@@ -340,15 +343,16 @@ def get_rotary_matrix(context_window, embedding_dim):
 
 K = 3
 config = {
-    'batch_size': 20,
-    'd_model': 64,
-    'n_heads': 16,
-    'context_window': K**4,
+    'batch_size': 10,
+    'd_model': 32,
+    'n_heads': 8,
+    'context_window': K**2,
 }
 
 print(Colors.OKGREEN + "### 'config' Rotary Matrix 01 ###" + Colors.ENDC)
-print(Colors.OKGREEN + str(config) + Colors.ENDC)  # Assuming MASTER_CONFIG is a variable
+print(Colors.OKGREEN + str(config) + Colors.ENDC)  
 print(Colors.OKGREEN + "###" + Colors.ENDC)
+print("")
 
 batch = torch.randn(1, config['context_window'], config['d_model'])
 R = get_rotary_matrix(config['context_window'], config['d_model'])
@@ -360,13 +364,14 @@ for i in range(K):
         ax[i, j].set_title(f'rotation at {i * K + j}')
 
 config = {
-    'd_model': 256,
-    'context_window': 32,
+    'd_model': 128,
+    'context_window': 16,
 }
 
 print(Colors.OKGREEN + "### 'config' Rotary Matrix 02 ###" + Colors.ENDC)
-print(Colors.OKGREEN + str(config) + Colors.ENDC)  # Assuming MASTER_CONFIG is a variable
+print(Colors.OKGREEN + str(config) + Colors.ENDC)  
 print(Colors.OKGREEN + "###" + Colors.ENDC)
+print("")
 
 R = get_rotary_matrix(config['context_window'], config['d_model'])
 x = torch.randn(config['d_model'])
@@ -381,15 +386,16 @@ x_n = R[n,:,:] @ y
 assert torch.isclose(x_m @ x_n, x @ R[n-m,:,:] @ y)
 
 config = {
-    'batch_size': 20,
-    'd_model': 1024,
-    'n_heads': 16,
-    'context_window': 32,
+    'batch_size': 10,
+    'd_model': 512,
+    'n_heads': 8,
+    'context_window': 16,
 }
 
 print(Colors.OKGREEN + "### 'config' RoPEAttentionHead 01 ###" + Colors.ENDC)
-print(Colors.OKGREEN + str(config) + Colors.ENDC)  # Assuming MASTER_CONFIG is a variable
+print(Colors.OKGREEN + str(config) + Colors.ENDC)  
 print(Colors.OKGREEN + "###" + Colors.ENDC)
+print("")
 
 class RoPEAttentionHead(nn.Module):
     def __init__(self, config):
@@ -464,15 +470,16 @@ assert torch.allclose(q.transpose(0,1)[0] @ layer.R[0], q[:,0,:] @ layer.R[0])
 assert torch.allclose(q_rotated, q_rotated)
 
 config = {
-    'batch_size': 2,
-    'd_model': 4,
-    'n_heads': 4,
-    'context_window': 6,
+    'batch_size': 1,
+    'd_model': 2,
+    'n_heads': 2,
+    'context_window': 3,
 }
 
 print(Colors.OKGREEN + "### 'config' RoPEAttentionHead 02 ###" + Colors.ENDC)
-print(Colors.OKGREEN + str(config) + Colors.ENDC)  # Assuming MASTER_CONFIG is a variable
+print(Colors.OKGREEN + str(config) + Colors.ENDC)  
 print(Colors.OKGREEN + "###" + Colors.ENDC)
+print("")
 
 layer = RoPEAttentionHead(config)
 batch = torch.ones((config['batch_size'], config['context_window'], config['d_model']))
@@ -518,12 +525,13 @@ class RoPEMultiheadAttention(nn.Module):
         return x
     
 MASTER_CONFIG.update({
-    'n_heads': 16,
+    'n_heads': 8,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' RoPEAttentionHead 01 ###" + Colors.ENDC)
-print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  # Assuming MASTER_CONFIG is a variable
+print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  
 print(Colors.OKGREEN + "###" + Colors.ENDC)
+print("")
 
 layer = RoPEMultiheadAttention(MASTER_CONFIG)
 batch = torch.ones((MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'], MASTER_CONFIG['d_model']))
@@ -548,7 +556,7 @@ class RopeModel(nn.Module):
 
         self.last_linear = nn.Linear(config['d_model'], config['vocab_size'])
 
-        print(Colors.RED)
+        print(Colors.RED + Colors.BOLD)
         print("model params from RopeModel #1:", sum([m.numel() for m in self.parameters()]))
         print(Colors.ENDC)
 
@@ -572,8 +580,9 @@ class RopeModel(nn.Module):
             return logits
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' RoPEModel 01 ###" + Colors.ENDC)
-print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  # Assuming MASTER_CONFIG is a variable
+print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  
 print(Colors.OKGREEN + "###" + Colors.ENDC)
+print("")
 
 model = RopeModel(MASTER_CONFIG)
 xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'])
@@ -585,12 +594,13 @@ train(model, optimizer)
 generate(model, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
-    'n_heads': 16,
+    'n_heads': 8,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' RoPEAttentionHead 02 ###" + Colors.ENDC)
-print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  # Assuming MASTER_CONFIG is a variable
+print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  
 print(Colors.OKGREEN + "###" + Colors.ENDC)
+print("")
 
 layer = RoPEAttentionHead(MASTER_CONFIG)
 batch = torch.ones((MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'], MASTER_CONFIG['d_model']))
@@ -600,10 +610,10 @@ plt.imshow(attn_weights[0].detach().numpy(), interpolation='nearest')
 plt.colorbar()
 
 config = {
-    'batch_size': 20,
-    'd_model': 1024,
-    'n_heads': 16,
-    'context_window': 32,
+    'batch_size': 10,
+    'd_model': 512,
+    'n_heads': 8,
+    'context_window': 16,
 }
 
 class RoPEMaskedAttentionHead(nn.Module):
@@ -653,16 +663,18 @@ class RoPEMaskedAttentionHead(nn.Module):
         return activations
 
 print(Colors.OKGREEN + "### 'config' RoPEMaskedAttentionHead 01 ###" + Colors.ENDC)
-print(Colors.OKGREEN + str(config) + Colors.ENDC)  # Assuming MASTER_CONFIG is a variable
+print(Colors.OKGREEN + str(config) + Colors.ENDC)  
 print(Colors.OKGREEN + "###" + Colors.ENDC)
+print("")
 
 layer = RoPEMaskedAttentionHead(config)
 batch = torch.randn((config['batch_size'], config['context_window'], config['d_model']))
 output, attn_weights = layer(batch, return_attn_weights=True)
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' RoPEMaskedAttentionHead 02 ###" + Colors.ENDC)
-print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  # Assuming MASTER_CONFIG is a variable
+print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  
 print(Colors.OKGREEN + "###" + Colors.ENDC)
+print("")
 
 layer = RoPEMaskedAttentionHead(MASTER_CONFIG)
 batch = torch.ones((MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'], MASTER_CONFIG['d_model']))
@@ -693,12 +705,13 @@ class RoPEMaskedMultiheadAttention(nn.Module):
         return x
     
 MASTER_CONFIG.update({
-    'n_heads': 16,
+    'n_heads': 8,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' RoPEMultiheadAttention 01 ###" + Colors.ENDC)
-print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  # Assuming MASTER_CONFIG is a variable
+print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  
 print(Colors.OKGREEN + "###" + Colors.ENDC)
+print("")
 
 layer = RoPEMultiheadAttention(MASTER_CONFIG)
 batch = torch.ones((MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'], MASTER_CONFIG['d_model']))
@@ -723,7 +736,7 @@ class RopeModel(nn.Module):
 
         self.last_linear = nn.Linear(config['d_model'], config['vocab_size'])
         
-        print(Colors.RED)
+        print(Colors.RED + Colors.BOLD)
         print("model params from RopeModel #2:", sum([m.numel() for m in self.parameters()]))
         print(Colors.ENDC)
 
@@ -754,13 +767,14 @@ optimizer = torch.optim.Adam(model.parameters())
 train(model, optimizer)
 
 MASTER_CONFIG.update({
-    "epochs": 300,
+    "epochs": 2000,
     "log_interval": 10,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' RopeModel 02 ###" + Colors.ENDC)
-print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  # Assuming MASTER_CONFIG is a variable
+print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  
 print(Colors.OKGREEN + "###" + Colors.ENDC)
+print("")
 
 train(model, optimizer)
 
@@ -805,7 +819,7 @@ class RopeModel(nn.Module):
 
         self.last_linear = nn.Linear(config['d_model'], config['vocab_size'])
         
-        print(Colors.RED)
+        print(Colors.RED + Colors.BOLD)
         print("model params from RopeModel #3:", sum([m.numel() for m in self.parameters()]))
         print(Colors.ENDC)
 
@@ -860,8 +874,9 @@ class LlamaBlock(nn.Module):
         return x
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' LlamaBlock 01 ###" + Colors.ENDC)
-print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  # Assuming MASTER_CONFIG is a variable
+print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  
 print(Colors.OKGREEN + "###" + Colors.ENDC)
+print("")
 
 block = LlamaBlock(MASTER_CONFIG)
 block(torch.randn(MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'], MASTER_CONFIG['d_model']));
@@ -869,7 +884,7 @@ block(torch.randn(MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'], 
 from collections import OrderedDict
 
 MASTER_CONFIG.update({
-    'n_layers': 4,
+    'n_layers': 2,
 })
 
 class Llama(nn.Module):
@@ -890,7 +905,7 @@ class Llama(nn.Module):
             nn.Linear(config['d_model'], config['vocab_size']),
         )
 
-        print(Colors.RED)
+        print(Colors.RED + Colors.BOLD)
         print("model params from Llama:", sum([m.numel() for m in self.parameters()]))
         print(Colors.ENDC)
 
@@ -914,24 +929,26 @@ class Llama(nn.Module):
             file_path (str): File path to save the model.
         """
         torch.save(self.state_dict(), file_path)
-        print(f"Model saved to {file_path}")
+        print(Colors.BOLD + f"Model saved to {file_path}" + Colors.ENDC)
     
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' Llama 01 ###" + Colors.ENDC)
-print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  # Assuming MASTER_CONFIG is a variable
+print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  
 print(Colors.OKGREEN + "###" + Colors.ENDC)
+print("")
 
 llama = Llama(MASTER_CONFIG)
 optimizer = torch.optim.Adam(llama.parameters())
 train(llama, optimizer, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
-    'epochs': 500,
+    'epochs': 4000,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' Llama Train 01 ###" + Colors.ENDC)
-print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  # Assuming MASTER_CONFIG is a variable
+print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  
 print(Colors.OKGREEN + "###" + Colors.ENDC)
+print("")
 
 train(llama, optimizer, scheduler=None, config=MASTER_CONFIG)
 
@@ -939,7 +956,7 @@ train(llama, optimizer, config=MASTER_CONFIG)
 
 llama.save_model("llama_model.pth")
 
-print(generate(llama, MASTER_CONFIG, 1500)[0])
+print(generate(llama, MASTER_CONFIG, 100)[0])
 
 xs, ys = get_batches(dataset, 'test', MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'])
 
@@ -953,5 +970,5 @@ def show_grads(model, tol=1e-2):
 
 show_grads(llama)
 
-print(f"Model Training Started at: {current_date}")
-print(f"Model Training Ended at: {datetime.now()}")
+print(Colors.BOLD + f"Model Training Started at: {current_date}")
+print(f"Model Training Ended at: {datetime.now()}" + Colors.ENDC)
