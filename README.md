@@ -68,7 +68,7 @@ After training, use the inference.py script for generating text:
 2 - Run the inference script:
 
 ```bash
-python inference.py
+python inference.py --maxtokens 500
 ```
 
 ## Dataset and Vocabulary
