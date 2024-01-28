@@ -34,6 +34,7 @@ tmp*
 tokenizer.model
 input.txt
 input*
+input.*
 *.pth
 MANIFEST
 

@@ -67,7 +67,8 @@ def get_batches(data, split, batch_size, context_window, config=MASTER_CONFIG):
 
 MASTER_CONFIG.update({
     'batch_size': 4,
-    'context_window': 8
+    'context_window': 8,
+    'opt_adam_lr': 0.0002
 })
 
 xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'])
@@ -143,9 +144,7 @@ print("")
 
 model = SimpleBrokenModel(MASTER_CONFIG)
 
-optimizer = torch.optim.Adam(
-    model.parameters(), 
-)
+optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
 
 def train(model, optimizer, scheduler=None, config=MASTER_CONFIG, print_logs=True):
     losses = []
@@ -222,7 +221,7 @@ model = SimpleModel(MASTER_CONFIG)
 xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'])
 
 logits, loss = model(xs, ys)
-optimizer = torch.optim.Adam(model.parameters())
+optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
 train(model, optimizer)
 
 def generate(model, config=MASTER_CONFIG, max_new_tokens=30):
@@ -326,7 +325,7 @@ model = SimpleModel_RMS(MASTER_CONFIG)
 xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'])
 
 logits, loss = model(xs, ys)
-optimizer = torch.optim.Adam(model.parameters())
+optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
 train(model, optimizer)
 
 def get_rotary_matrix(context_window, embedding_dim):
@@ -589,7 +588,7 @@ model = RopeModel(MASTER_CONFIG)
 xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'])
 
 logits, loss = model(xs, ys)
-optimizer = torch.optim.Adam(model.parameters())
+optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
 train(model, optimizer)
 
 generate(model, config=MASTER_CONFIG)
@@ -764,7 +763,7 @@ model = RopeModel(MASTER_CONFIG)
 xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'])
 
 logits, loss = model(xs, ys)
-optimizer = torch.optim.Adam(model.parameters())
+optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
 train(model, optimizer)
 
 MASTER_CONFIG.update({
@@ -847,7 +846,7 @@ model = RopeModel(MASTER_CONFIG)
 xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'])
 
 logits, loss = model(xs, ys)
-optimizer = torch.optim.Adam(model.parameters())
+optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
 train(model, optimizer)
 
 # add RMSNorm and residual conncection
@@ -939,7 +938,7 @@ print(Colors.OKGREEN + "###" + Colors.ENDC)
 print("")
 
 llama = Llama(MASTER_CONFIG)
-optimizer = torch.optim.Adam(llama.parameters())
+optimizer = torch.optim.Adam(llama.parameters(),MASTER_CONFIG['opt_adam_lr'])
 train(llama, optimizer, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
