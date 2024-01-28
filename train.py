@@ -67,7 +67,7 @@ def get_batches(data, split, batch_size, context_window, config=MASTER_CONFIG):
 
 MASTER_CONFIG.update({
     'batch_size': 4,
-    'context_window': 8,
+    'context_window': 32,
     'opt_adam_lr': 0.0002
 })
 
@@ -132,7 +132,7 @@ xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFI
 logits, loss = model(xs, ys)
 
 MASTER_CONFIG.update({
-    'epochs': 500,
+    'epochs': 250,
     'log_interval': 10,
     'batch_size': 32,
 })
@@ -364,7 +364,7 @@ for i in range(K):
 
 config = {
     'd_model': 256,
-    'context_window': 16,
+    'context_window': 32,
 }
 
 print(Colors.OKGREEN + "### 'config' Rotary Matrix 02 ###" + Colors.ENDC)
@@ -388,7 +388,7 @@ config = {
     'batch_size': 10,
     'd_model': 256,
     'n_heads': 8,
-    'context_window': 16,
+    'context_window': 32,
 }
 
 print(Colors.OKGREEN + "### 'config' RoPEAttentionHead 01 ###" + Colors.ENDC)
@@ -613,7 +613,7 @@ config = {
     'batch_size': 10,
     'd_model': 256,
     'n_heads': 8,
-    'context_window': 16,
+    'context_window': 64,
 }
 
 class RoPEMaskedAttentionHead(nn.Module):
@@ -767,8 +767,8 @@ optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
 train(model, optimizer)
 
 MASTER_CONFIG.update({
-    "epochs": 1000,
-    "log_interval": 10,
+    'epochs': 500,
+    'log_interval': 10,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' RopeModel 02 ###" + Colors.ENDC)
@@ -942,7 +942,7 @@ optimizer = torch.optim.Adam(llama.parameters(),MASTER_CONFIG['opt_adam_lr'])
 train(llama, optimizer, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
-    'epochs': 2000,
+    'epochs': 1000,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' Llama Train 01 ###" + Colors.ENDC)
