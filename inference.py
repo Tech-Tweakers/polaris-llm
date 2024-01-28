@@ -183,31 +183,28 @@ def decode(ids, itos):
     :param itos: Inverse token mapping dictionary.
     :return: Decoded string.
     """
-    return ''.join([itos[i] for i in ids])
+    return ''.join([itos[i.item()] for i in ids])
 
 def generate(model, config, max_new_tokens=30):
-    idx = torch.zeros(5, 1).long()
-    for i in range(max_new_tokens):
-        progress_bar(i + 1, max_new_tokens)  # Update progress bar
-        logits = model(idx[:, -config['context_window']:])
+    idx = torch.zeros(1, config['context_window']).long()  # Initialize with zeros and context_window size
+    generated_text = ''
+
+    for _ in range(max_new_tokens):
+        logits = model(idx)
         last_time_step_logits = logits[:, -1, :]
         p = F.softmax(last_time_step_logits, dim=-1)
         idx_next = torch.multinomial(p, num_samples=1)
-        idx = torch.cat([idx, idx_next], dim=-1)
-    print()  # New line after progress bar
-    return [decode(x, itos) for x in idx.tolist()]
 
-def progress_bar(current, total, bar_length=50):
-    """
-    Display a progress bar.
-    :param current: Current progress.
-    :param total: Total steps.
-    :param bar_length: Length of the progress bar.
-    """
-    fraction = current / total
-    arrow = int(fraction * bar_length - 1) * "=" + ">"
-    padding = int(bar_length - len(arrow)) * " "
-    print(f"\rGenerating: [{arrow}{padding}] {int(fraction * 100)}%", end='')
+        # Update idx to include the new token, considering only the last 'context_window' tokens
+        idx = torch.cat([idx, idx_next], dim=1)[:, -config['context_window']:]
+
+        # Decode the latest token and add it to the generated text
+        generated_token = decode(idx_next, itos)
+        generated_text += generated_token
+        print(generated_token, end='', flush=True)
+
+    print()  # New line after the generation
+    return generated_text
 
 #
 # Main Execution
@@ -268,7 +265,6 @@ if __name__ == "__main__":
     #
 
     generated_text = generate(model, MASTER_CONFIG, args.maxtokens)
-    print(generated_text[0])
 
     print(f"\nInference finished: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
 
