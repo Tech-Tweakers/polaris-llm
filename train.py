@@ -72,7 +72,7 @@ def get_batches(data, split, batch_size, context_window, config=MASTER_CONFIG):
 
 MASTER_CONFIG.update({
     'batch_size': 4,
-    'context_window': 64,
+    'context_window': 32,
     'opt_adam_lr': 0.0002
 })
 
@@ -123,7 +123,7 @@ class SimpleBrokenModel(nn.Module):
             return logits
 
 MASTER_CONFIG.update({
-    'd_model': 128,
+    'd_model': 256,
 })
 
 print(Colors.OKGREEN + "### MASTER_CONFIG SimpleBrokenModel 01 ###" + Colors.ENDC)
@@ -137,7 +137,7 @@ xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFI
 logits, loss = model(xs, ys)
 
 MASTER_CONFIG.update({
-    'epochs': 250,
+    'epochs': 100,
     'log_interval': 10,
     'batch_size': 10,
 })
@@ -369,7 +369,7 @@ for i in range(K):
 
 config = {
     'd_model': 256,
-    'context_window': 64,
+    'context_window': 32,
 }
 
 print(Colors.OKGREEN + "### 'config' Rotary Matrix 02 ###" + Colors.ENDC)
@@ -393,7 +393,7 @@ config = {
     'batch_size': 10,
     'd_model': 256,
     'n_heads': 8,
-    'context_window': 64,
+    'context_window': 32,
 }
 
 print(Colors.OKGREEN + "### 'config' RoPEAttentionHead 01 ###" + Colors.ENDC)
@@ -618,7 +618,7 @@ config = {
     'batch_size': 10,
     'd_model': 256,
     'n_heads': 8,
-    'context_window': 128,
+    'context_window': 64,
 }
 
 class RoPEMaskedAttentionHead(nn.Module):
@@ -772,7 +772,7 @@ optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
 train(model, optimizer)
 
 MASTER_CONFIG.update({
-    'epochs': 500,
+    'epochs': 200,
     'log_interval': 10,
 })
 
@@ -947,7 +947,7 @@ optimizer = torch.optim.Adam(llama.parameters(),MASTER_CONFIG['opt_adam_lr'])
 train(llama, optimizer, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
-    'epochs': 1000,
+    'epochs': 300,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' Llama Train 01 ###" + Colors.ENDC)
@@ -962,7 +962,7 @@ train(llama, optimizer, config=MASTER_CONFIG)
 MASTER_CONFIG.update({
     'n_layers': 4,
     'd_model': 256,
-    'context_window': 64,
+    'context_window': 32,
     'batch_size': 10,
     'epochs': 1000,
     'n_heads': 8,
