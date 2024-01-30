@@ -962,7 +962,7 @@ train(llama, optimizer, config=MASTER_CONFIG)
 MASTER_CONFIG.update({
     'n_layers': 4,
     'd_model': 256,
-    'context_window': 32,
+    'context_window': 256,
     'batch_size': 10,
     'epochs': 1000,
     'n_heads': 8,
