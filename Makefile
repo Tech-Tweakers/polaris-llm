@@ -44,19 +44,36 @@ remove_chars_before_third_space: check_file
 	@echo "Removing all characters before the third space..."
 	@awk '{ for (i = 1; i <= NF; i++) { if (i > 3) printf "%s%s", $$i, (i < NF ? OFS : ORS) } }' $(file) > tmpfile && mv tmpfile $(file) || { echo "Error: Failed to remove characters before the third space."; rm -f tmpfile; exit 1; }
 
+# Target to add a period at the end of lines that do not end with ',', '!', or '?'
+add_period_if_needed: check_file
+	@echo "Adding a period to the end of lines if needed..."
+	@sed -i '/[^,!?]$$/ s/$$/./' $(file) || { echo "Error: Failed to add periods where needed."; exit 1; }
+
+# Target to apply conversation tags to the file
+tag_conversation: check_file
+	@echo "Applying conversation tags..."
+	@awk 'BEGIN {FS = ": "; OFS = "";} {if ($$1 == "User" || $$1 == "Txai") {print "<START><" toupper($$1) ">" $$2 "<END>"} else {print $$0}}' $(file) > $(outfile) || { echo "Error: Failed to tag conversation."; exit 1; }
+	@echo "Tagging complete. Output written to $(outfile)"
+
+# Example usage: make tag_conversation file=input.txt outfile=output.txt
+
+
 # Help target to display usage
 help:
-	@echo "Usage:"
-	@echo "  make [target] file=FILENAME [backup=true] [string=CUSTOM_STRING]"
-	@echo "Targets:"
-	@echo "  all                              - Perform all modifications on the file."
-	@echo "  delete_custom_string             - Delete lines containing a custom string in the file."
-	@echo "  merge_lines                      - Merge certain lines in the file."
-	@echo "  remove_media_phrase              - Remove lines containing a specific phrase in the file."
-	@echo "  remove_chars_before_third_space  - Remove all characters before the third space in each line."
-	@echo "  backup                           - Create a backup of the original file."
-	@echo "  help                             - Display this help message."
-	@echo "Options:"
-	@echo "  file=FILENAME       	- Specify the file to process."
-	@echo "  string=CUSTOM_STRING	- Specify the custom string for deletion."
-	@echo "  backup=true         	- Create a backup of the file before processing."
+	@echo "- Usage:"
+	@echo "  	make [target] file=FILENAME [backup=true] [string=CUSTOM_STRING] [outfile=OUTPUT_FILENAME]"
+	@echo "- Targets:"
+	@echo "  	all                              - Perform all modifications on the file."
+	@echo "  	delete_custom_string             - Delete lines containing a custom string in the file."
+	@echo "  	merge_lines                      - Merge certain lines in the file."
+	@echo "  	remove_media_phrase              - Remove lines containing a specific phrase in the file."
+	@echo "  	remove_chars_before_third_space  - Remove all characters before the third space in each line."
+	@echo "  	add_period_if_needed             - Add a period at the end of lines that don't end with ',', '!', or '?'."
+	@echo "  	backup                           - Create a backup of the original file."
+	@echo "  	tag_conversation                 - Apply model conversation tags to the file. Use 'file' for input and 'outfile' for output."
+	@echo "  	help                             - Display this help message."
+	@echo "- Options:"
+	@echo "  	file=FILENAME                    - Specify the file to process for make targets."
+	@echo "  	outfile=OUTPUT_FILENAME          - Specify the output file for the tag_conversation target."
+	@echo "  	string=CUSTOM_STRING             - Specify the custom string for deletion."
+	@echo "  	backup=true                      - Create a backup of the file before processing."

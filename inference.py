@@ -85,7 +85,7 @@ class RoPEMaskedAttentionHead(nn.Module):
         v = self.w_v(x)
         q_rotated = (torch.bmm(q.transpose(0, 1), self.R[:m])).transpose(0, 1)
         k_rotated = (torch.bmm(k.transpose(0, 1), self.R[:m])).transpose(0, 1)
-        activations = F.scaled_dot_product_attention(q_rotated, k_rotated, v, dropout_p=0.1, is_causal=True)
+        activations = F.scaled_dot_product_attention(q_rotated, k_rotated, v, dropout_p=0.1, is_causal=False)
         if return_attn_weights:
             attn_mask = torch.tril(torch.ones((m, m)), diagonal=0)
             attn_weights = torch.bmm(q_rotated, k_rotated.transpose(1, 2)) / np.sqrt(d) + attn_mask
@@ -185,26 +185,48 @@ def decode(ids, itos):
     """
     return ''.join([itos[i.item()] for i in ids])
 
-def generate(model, config, max_new_tokens=30):
-    idx = torch.zeros(1, config['context_window']).long()  # Initialize with zeros and context_window size
+def generate(model, config, max_new_tokens=30, starting_idx=None, temperature=1.0, top_k=0, top_p=1.0, stop_phrase="Mirim"):
+    if starting_idx is None:
+        idx = torch.zeros(1, config['context_window']).long()
+    else:
+        idx = starting_idx
+
     generated_text = ''
 
     for _ in range(max_new_tokens):
         logits = model(idx)
-        last_time_step_logits = logits[:, -1, :]
+        last_time_step_logits = logits[:, -1, :] / temperature
+
+        # Apply top_k filtering
+        if top_k > 0:
+            indices_to_remove = last_time_step_logits < torch.topk(last_time_step_logits, top_k)[0][..., -1, None]
+            last_time_step_logits[indices_to_remove] = -float('Inf')
+
+        # Apply top_p (nucleus) filtering
+        if top_p < 1.0:
+            sorted_logits, sorted_indices = torch.sort(last_time_step_logits, descending=True)
+            cumulative_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
+            sorted_indices_to_remove = cumulative_probs > top_p
+            sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
+            sorted_indices_to_remove[..., 0] = 0
+            indices_to_remove = sorted_indices[sorted_indices_to_remove]
+            last_time_step_logits[indices_to_remove] = -float('Inf')
+
         p = F.softmax(last_time_step_logits, dim=-1)
         idx_next = torch.multinomial(p, num_samples=1)
-
-        # Update idx to include the new token, considering only the last 'context_window' tokens
         idx = torch.cat([idx, idx_next], dim=1)[:, -config['context_window']:]
-
-        # Decode the latest token and add it to the generated text
         generated_token = decode(idx_next, itos)
+
         generated_text += generated_token
         print(generated_token, end='', flush=True)
 
-    print()  # New line after the generation
+        # Check if the cumulative text ends with the stop phrase
+        if generated_text.endswith(stop_phrase):
+            break
+
+    print()
     return generated_text
+
 
 #
 # Main Execution
@@ -214,6 +236,12 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Polaris LLM Inferencer')
     parser.add_argument('--maxtokens', type=int, default=200, help='Maximum new tokens to generate')
+    parser.add_argument('--temperature', type=float, default=1.0, help='Sampling temperature')
+    parser.add_argument('--top_k', type=int, default=0, help='Top K filtering')
+    parser.add_argument('--top_p', type=float, default=1.0, help='Top P (nucleus) filtering')
+    parser.add_argument('--user_input', action='store_true', help='Enable user input for text generation')
+
+    
     args = parser.parse_args()
     
     #
@@ -229,6 +257,10 @@ if __name__ == "__main__":
         exit(1)
 
     vocab = sorted(list(set(lines)))
+    tags = ['<START>', '<END>', '<POLARIS>', '<USER>']
+    for tag in tags:
+        vocab.append(tag)
+
     stoi = {ch: i for i, ch in enumerate(vocab)}
     itos = {i: ch for i, ch in enumerate(vocab)}
     
@@ -263,8 +295,19 @@ if __name__ == "__main__":
     #
     # Run Text Generation
     #
+        
+    # Conditional user input based on the flag
+    if args.user_input:
+        user_input = input("> ")
+    else:
+        user_input = "<START>"  # Or any default starting string you prefer
 
-    generated_text = generate(model, MASTER_CONFIG, args.maxtokens)
+    # Tokenize input
+    tokenized_input = [stoi[ch] for ch in user_input if ch in stoi]
+    tokenized_input = torch.tensor(tokenized_input).unsqueeze(0)  # Add batch dimension
+
+    # Run Text Generation with user input
+    generated_text = generate(model, MASTER_CONFIG, args.maxtokens, starting_idx=tokenized_input)
 
     print(f"\nInference finished: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
 

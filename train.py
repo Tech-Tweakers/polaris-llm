@@ -28,6 +28,11 @@ print("")
 lines = open('input.txt', 'r').read()
 
 vocab = sorted(list(set(lines)))
+
+tags = ['<START>', '<END>', '<TXAI>', '<USER>']
+for tag in tags:
+    vocab.append(tag)
+
 itos = {i:ch for i, ch in enumerate(vocab)}
 stoi = {ch:i for i, ch in enumerate(vocab)}
 
@@ -134,7 +139,7 @@ logits, loss = model(xs, ys)
 MASTER_CONFIG.update({
     'epochs': 250,
     'log_interval': 10,
-    'batch_size': 32,
+    'batch_size': 10,
 })
 
 print(Colors.OKGREEN + "### MASTER_CONFIG SimpleBrokenModel 02 ###" + Colors.ENDC)
@@ -951,6 +956,17 @@ print(Colors.OKGREEN + "###" + Colors.ENDC)
 print("")
 
 train(llama, optimizer, scheduler=None, config=MASTER_CONFIG)
+
+train(llama, optimizer, config=MASTER_CONFIG)
+
+MASTER_CONFIG.update({
+    'n_layers': 4,
+    'd_model': 256,
+    'context_window': 32,
+    'batch_size': 10,
+    'epochs': 1000,
+    'n_heads': 8,
+})
 
 train(llama, optimizer, config=MASTER_CONFIG)
 
