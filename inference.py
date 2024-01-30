@@ -269,7 +269,7 @@ if __name__ == "__main__":
     #
     
     MASTER_CONFIG = {
-        'vocab_size': 238,
+        'vocab_size': len(vocab),
         'batch_size': 32,
         'context_window': 32,
         'd_model': 128,

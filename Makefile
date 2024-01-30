@@ -52,7 +52,7 @@ add_period_if_needed: check_file
 # Target to apply conversation tags to the file
 tag_conversation: check_file
 	@echo "Applying conversation tags..."
-	@awk 'BEGIN {FS = ": "; OFS = "";} {if ($$1 == "User" || $$1 == "Polaris") {print "<START><" toupper($$1) ">" $$2 "<END>"} else {print $$0}}' $(file) > $(outfile) || { echo "Error: Failed to tag conversation."; exit 1; }
+	@awk 'BEGIN {FS = ": "; OFS = "";} {if ($$1 == "User" || $$1 == "Txai") {print "<START><" toupper($$1) ">" $$2 "<END>"} else {print $$0}}' $(file) > $(outfile) || { echo "Error: Failed to tag conversation."; exit 1; }
 	@echo "Tagging complete. Output written to $(outfile)"
 
 # Example usage: make tag_conversation file=input.txt outfile=output.txt

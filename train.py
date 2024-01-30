@@ -28,6 +28,11 @@ print("")
 lines = open('input.txt', 'r').read()
 
 vocab = sorted(list(set(lines)))
+
+tags = ['<START>', '<END>', '<TXAI>', '<USER>']
+for tag in tags:
+    vocab.append(tag)
+
 itos = {i:ch for i, ch in enumerate(vocab)}
 stoi = {ch:i for i, ch in enumerate(vocab)}
 
