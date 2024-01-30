@@ -51,9 +51,9 @@ cd Polaris-llm
 
 ### Training the Model
 
-1 - Prepare your dataset: The dataset should be a text file where the text data is used for training the model. The input file should be placed in the root directory. In the **Makefile** there is some functions to improve the dataset, like removing special characters, strings, etc.
+1 - **Prepare your dataset**: The dataset should be a text file where the text data is used for training the model. The input file should be placed in the root directory. In the **Makefile** there is some functions to improve the dataset, like removing special characters, strings, add tags, etc.
 
-2 - Run the training script: The training script will train the model and save the trained model to the models directory. The script will also save a checkpoint of the model after each epoch. The checkpoint files are used to resume training if the training process is interrupted.
+2 - **Run the training script**: The training script will train the model and save the trained model to the models directory. The script will also monitor performance metrics. The script can be run with the following command:
 
 ```bash
 python train.py
@@ -68,7 +68,22 @@ After training, use the inference.py script for generating text:
 2 - Run the inference script:
 
 ```bash
-python inference.py --maxtokens 500
+# Example command
+python3 inference.py --maxtokens 5000 --temperature 0.7 --top_k 1 --top_p 10 --user_input
+
+# Help
+Polaris LLM Inferencer v0.1.0
+usage: inference.py [-h] [--maxtokens MAXTOKENS] [--temperature TEMPERATURE] [--top_k TOP_K] [--top_p TOP_P] [--user_input]
+
+options:
+  -h, --help            show this help message and exit
+  --maxtokens MAXTOKENS
+                        Maximum new tokens to generate
+  --temperature TEMPERATURE
+                        Sampling temperature
+  --top_k TOP_K         Top K filtering
+  --top_p TOP_P         Top P (nucleus) filtering
+  --user_input          Enable user input for text generation
 ```
 
 ## Dataset and Vocabulary
