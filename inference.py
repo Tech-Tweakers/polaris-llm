@@ -274,7 +274,7 @@ if __name__ == "__main__":
         'context_window': 32,
         'd_model': 256,
         'n_heads': 8,
-        'n_layers': 2
+        'n_layers': 4
     }
     config = MASTER_CONFIG
     

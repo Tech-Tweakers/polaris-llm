@@ -72,7 +72,7 @@ def get_batches(data, split, batch_size, context_window, config=MASTER_CONFIG):
 
 MASTER_CONFIG.update({
     'batch_size': 32,
-    'context_window': 64,
+    'context_window': 32,
     'opt_adam_lr': 0.0002
 })
 
@@ -137,7 +137,7 @@ xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFI
 logits, loss = model(xs, ys)
 
 MASTER_CONFIG.update({
-    'epochs': 100,
+    'epochs': 1000,
     'log_interval': 10,
     'batch_size': 32,
 })
@@ -369,7 +369,7 @@ for i in range(K):
 
 config = {
     'd_model': 256,
-    'context_window': 64,
+    'context_window': 32,
 }
 
 print(Colors.OKGREEN + "### 'config' Rotary Matrix 02 ###" + Colors.ENDC)
@@ -392,8 +392,8 @@ assert torch.isclose(x_m @ x_n, x @ R[n-m,:,:] @ y)
 config = {
     'batch_size': 32,
     'd_model': 256,
-    'n_heads': 8,
-    'context_window': 64,
+    'n_heads': 4,
+    'context_window': 32,
 }
 
 print(Colors.OKGREEN + "### 'config' RoPEAttentionHead 01 ###" + Colors.ENDC)
@@ -530,7 +530,7 @@ class RoPEMultiheadAttention(nn.Module):
         return x
     
 MASTER_CONFIG.update({
-    'n_heads': 8,
+    'n_heads': 4,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' RoPEAttentionHead 01 ###" + Colors.ENDC)
@@ -599,7 +599,7 @@ train(model, optimizer)
 generate(model, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
-    'n_heads': 8,
+    'n_heads': 4,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' RoPEAttentionHead 02 ###" + Colors.ENDC)
@@ -617,8 +617,8 @@ plt.colorbar()
 config = {
     'batch_size': 32,
     'd_model': 256,
-    'n_heads': 8,
-    'context_window': 64,
+    'n_heads': 4,
+    'context_window': 32,
 }
 
 class RoPEMaskedAttentionHead(nn.Module):
@@ -710,7 +710,7 @@ class RoPEMaskedMultiheadAttention(nn.Module):
         return x
     
 MASTER_CONFIG.update({
-    'n_heads': 8,
+    'n_heads': 4,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' RoPEMultiheadAttention 01 ###" + Colors.ENDC)
@@ -772,7 +772,7 @@ optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
 train(model, optimizer)
 
 MASTER_CONFIG.update({
-    'epochs': 100,
+    'epochs': 1000,
     'log_interval': 10,
 })
 
@@ -889,7 +889,7 @@ block(torch.randn(MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'], 
 from collections import OrderedDict
 
 MASTER_CONFIG.update({
-    'n_layers': 12,
+    'n_layers': 4,
 })
 
 class Llama(nn.Module):
@@ -947,7 +947,7 @@ optimizer = torch.optim.Adam(llama.parameters(),MASTER_CONFIG['opt_adam_lr'])
 train(llama, optimizer, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
-    'epochs': 150,
+    'epochs': 1000,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' Llama Train 01 ###" + Colors.ENDC)
@@ -958,11 +958,11 @@ print("")
 train(llama, optimizer, scheduler=None, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
-    'n_layers': 12,
+    'n_layers': 4,
     'd_model': 256,
-    'context_window': 64,
+    'context_window': 32,
     'batch_size': 32,
-    'epochs': 200,
+    'epochs': 1000,
     'n_heads': 8,
 })
 
