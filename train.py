@@ -71,8 +71,8 @@ def get_batches(data, split, batch_size, context_window, config=MASTER_CONFIG):
     return x, y
 
 MASTER_CONFIG.update({
-    'batch_size': 4,
-    'context_window': 32,
+    'batch_size': 32,
+    'context_window': 64,
     'opt_adam_lr': 0.0002
 })
 
@@ -123,7 +123,7 @@ class SimpleBrokenModel(nn.Module):
             return logits
 
 MASTER_CONFIG.update({
-    'd_model': 128,
+    'd_model': 256,
 })
 
 print(Colors.OKGREEN + "### MASTER_CONFIG SimpleBrokenModel 01 ###" + Colors.ENDC)
@@ -137,9 +137,9 @@ xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFI
 logits, loss = model(xs, ys)
 
 MASTER_CONFIG.update({
-    'epochs': 250,
+    'epochs': 100,
     'log_interval': 10,
-    'batch_size': 10,
+    'batch_size': 32,
 })
 
 print(Colors.OKGREEN + "### MASTER_CONFIG SimpleBrokenModel 02 ###" + Colors.ENDC)
@@ -369,7 +369,7 @@ for i in range(K):
 
 config = {
     'd_model': 256,
-    'context_window': 32,
+    'context_window': 64,
 }
 
 print(Colors.OKGREEN + "### 'config' Rotary Matrix 02 ###" + Colors.ENDC)
@@ -390,10 +390,10 @@ x_n = R[n,:,:] @ y
 assert torch.isclose(x_m @ x_n, x @ R[n-m,:,:] @ y)
 
 config = {
-    'batch_size': 10,
+    'batch_size': 32,
     'd_model': 256,
     'n_heads': 8,
-    'context_window': 32,
+    'context_window': 64,
 }
 
 print(Colors.OKGREEN + "### 'config' RoPEAttentionHead 01 ###" + Colors.ENDC)
@@ -615,7 +615,7 @@ plt.imshow(attn_weights[0].detach().numpy(), interpolation='nearest')
 plt.colorbar()
 
 config = {
-    'batch_size': 10,
+    'batch_size': 32,
     'd_model': 256,
     'n_heads': 8,
     'context_window': 64,
@@ -772,7 +772,7 @@ optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
 train(model, optimizer)
 
 MASTER_CONFIG.update({
-    'epochs': 500,
+    'epochs': 100,
     'log_interval': 10,
 })
 
@@ -889,7 +889,7 @@ block(torch.randn(MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'], 
 from collections import OrderedDict
 
 MASTER_CONFIG.update({
-    'n_layers': 2,
+    'n_layers': 12,
 })
 
 class Llama(nn.Module):
@@ -947,7 +947,7 @@ optimizer = torch.optim.Adam(llama.parameters(),MASTER_CONFIG['opt_adam_lr'])
 train(llama, optimizer, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
-    'epochs': 1000,
+    'epochs': 150,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' Llama Train 01 ###" + Colors.ENDC)
@@ -957,22 +957,26 @@ print("")
 
 train(llama, optimizer, scheduler=None, config=MASTER_CONFIG)
 
-train(llama, optimizer, config=MASTER_CONFIG)
-
 MASTER_CONFIG.update({
-    'n_layers': 4,
+    'n_layers': 12,
     'd_model': 256,
-    'context_window': 32,
-    'batch_size': 10,
-    'epochs': 1000,
+    'context_window': 64,
+    'batch_size': 32,
+    'epochs': 200,
     'n_heads': 8,
 })
+
+print(Colors.OKGREEN + "### 'MASTER_CONFIG' Llama Train Final ###" + Colors.ENDC)
+print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)  
+print(Colors.OKGREEN + "###" + Colors.ENDC)
+print("")
 
 train(llama, optimizer, config=MASTER_CONFIG)
 
 llama.save_model("llama_model.pth")
 
-print(generate(llama, MASTER_CONFIG, 200)[0])
+print(generate(llama, MASTER_CONFIG, 400)[0])
+print("")
 
 xs, ys = get_batches(dataset, 'test', MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'])
 
@@ -985,6 +989,9 @@ def show_grads(model, tol=1e-2):
     return sorted([(name, 100.0 * float(torch.sum(torch.abs(param) <= tol)) / float(param.nelement())) for name, param in model.named_parameters() if param.requires_grad], key=lambda t: t[1], reverse=True)
 
 show_grads(llama)
+
+print(Colors.BOLD + Colors.OKGREEN + "Final config to use in inference: ", MASTER_CONFIG)
+print(Colors.ENDC)
 
 print(Colors.BOLD + f"Model Training Started at: {current_date}")
 print(f"Model Training Ended at: {datetime.now()}" + Colors.ENDC)
