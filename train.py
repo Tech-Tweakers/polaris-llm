@@ -71,7 +71,7 @@ def get_batches(data, split, batch_size, context_window, config=MASTER_CONFIG):
     return x, y
 
 MASTER_CONFIG.update({
-    'batch_size': 32,
+    'batch_size': 24,
     'context_window': 32,
     'opt_adam_lr': 0.0002
 })
@@ -123,7 +123,7 @@ class SimpleBrokenModel(nn.Module):
             return logits
 
 MASTER_CONFIG.update({
-    'd_model': 256,
+    'd_model': 128,
 })
 
 print(Colors.OKGREEN + "### MASTER_CONFIG SimpleBrokenModel 01 ###" + Colors.ENDC)
@@ -139,7 +139,7 @@ logits, loss = model(xs, ys)
 MASTER_CONFIG.update({
     'epochs': 1000,
     'log_interval': 10,
-    'batch_size': 32,
+    'batch_size': 24,
 })
 
 print(Colors.OKGREEN + "### MASTER_CONFIG SimpleBrokenModel 02 ###" + Colors.ENDC)
@@ -368,7 +368,7 @@ for i in range(K):
         ax[i, j].set_title(f'rotation at {i * K + j}')
 
 config = {
-    'd_model': 256,
+    'd_model': 128,
     'context_window': 32,
 }
 
@@ -390,9 +390,9 @@ x_n = R[n,:,:] @ y
 assert torch.isclose(x_m @ x_n, x @ R[n-m,:,:] @ y)
 
 config = {
-    'batch_size': 32,
-    'd_model': 256,
-    'n_heads': 4,
+    'batch_size': 24,
+    'd_model': 128,
+    'n_heads': 8,
     'context_window': 32,
 }
 
@@ -476,7 +476,7 @@ assert torch.allclose(q_rotated, q_rotated)
 config = {
     'batch_size': 1,
     'd_model': 2,
-    'n_heads': 2,
+    'n_heads': 8,
     'context_window': 3,
 }
 
@@ -530,7 +530,7 @@ class RoPEMultiheadAttention(nn.Module):
         return x
     
 MASTER_CONFIG.update({
-    'n_heads': 4,
+    'n_heads': 8,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' RoPEAttentionHead 01 ###" + Colors.ENDC)
@@ -599,7 +599,7 @@ train(model, optimizer)
 generate(model, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
-    'n_heads': 4,
+    'n_heads': 8,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' RoPEAttentionHead 02 ###" + Colors.ENDC)
@@ -615,9 +615,9 @@ plt.imshow(attn_weights[0].detach().numpy(), interpolation='nearest')
 plt.colorbar()
 
 config = {
-    'batch_size': 32,
-    'd_model': 256,
-    'n_heads': 4,
+    'batch_size': 24,
+    'd_model': 128,
+    'n_heads': 8,
     'context_window': 32,
 }
 
@@ -710,7 +710,7 @@ class RoPEMaskedMultiheadAttention(nn.Module):
         return x
     
 MASTER_CONFIG.update({
-    'n_heads': 4,
+    'n_heads': 8,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' RoPEMultiheadAttention 01 ###" + Colors.ENDC)
@@ -947,7 +947,7 @@ optimizer = torch.optim.Adam(llama.parameters(),MASTER_CONFIG['opt_adam_lr'])
 train(llama, optimizer, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
-    'epochs': 1000,
+    'epochs': 5000,
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' Llama Train 01 ###" + Colors.ENDC)
@@ -959,10 +959,10 @@ train(llama, optimizer, scheduler=None, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
     'n_layers': 4,
-    'd_model': 256,
+    'd_model': 128,
     'context_window': 32,
-    'batch_size': 32,
-    'epochs': 1000,
+    'batch_size': 24,
+    'epochs': 10000,
     'n_heads': 8,
 })
 
