@@ -274,7 +274,7 @@ if __name__ == "__main__":
         'context_window': 32,
         'd_model': 128,
         'n_heads': 8,
-        'n_layers': 4
+        'n_layers': 8
     }
     config = MASTER_CONFIG
     
@@ -300,7 +300,7 @@ if __name__ == "__main__":
     if args.user_input:
         user_input = input("> ")
     else:
-        user_input = "<START>"  # Or any default starting string you prefer
+        user_input = " "  # Or any default starting string you prefer
 
     # Tokenize input
     tokenized_input = [stoi[ch] for ch in user_input if ch in stoi]

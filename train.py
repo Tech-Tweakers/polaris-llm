@@ -889,7 +889,7 @@ block(torch.randn(MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'], 
 from collections import OrderedDict
 
 MASTER_CONFIG.update({
-    'n_layers': 4,
+    'n_layers': 8,
 })
 
 class Llama(nn.Module):
@@ -958,7 +958,7 @@ print("")
 train(llama, optimizer, scheduler=None, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
-    'n_layers': 4,
+    'n_layers': 8,
     'd_model': 128,
     'context_window': 32,
     'batch_size': 24,
