@@ -973,6 +973,8 @@ print("")
 
 train(llama, optimizer, config=MASTER_CONFIG)
 
+train(llama, optimizer, config=MASTER_CONFIG)
+
 llama.save_model("llama_model.pth")
 
 print(generate(llama, MASTER_CONFIG, 400)[0])
