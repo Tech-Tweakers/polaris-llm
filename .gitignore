@@ -28,6 +28,10 @@ txai*
 *txai*
 txai.*
 txai.txt
+input.txt
+input*
+input.*
+*input*
 tmp*
 *tmp*
 tmp*
