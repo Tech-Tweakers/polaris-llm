@@ -6,6 +6,8 @@ from matplotlib import pyplot as plt
 import time
 import pandas as pd
 from datetime import datetime
+from torch.optim.lr_scheduler import ReduceLROnPlateau
+
 
 current_date = datetime.now()
 
@@ -72,7 +74,7 @@ def get_batches(data, split, batch_size, context_window, config=MASTER_CONFIG):
 
 MASTER_CONFIG.update({
     'batch_size': 24,
-    'context_window': 32,
+    'context_window': 64,
     'opt_adam_lr': 0.0002
 })
 
@@ -140,6 +142,7 @@ MASTER_CONFIG.update({
     'epochs': 1000,
     'log_interval': 10,
     'batch_size': 24,
+    'opt_adam_lr': 1e-3 # 0.001
 })
 
 print(Colors.OKGREEN + "### MASTER_CONFIG SimpleBrokenModel 02 ###" + Colors.ENDC)
@@ -147,16 +150,21 @@ print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)
 print(Colors.OKGREEN + "###" + Colors.ENDC)
 print("")
 
+optimizer = torch.optim.Adam(model.parameters(), lr=MASTER_CONFIG['opt_adam_lr'])
+scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.7, patience=3, verbose=True)
+
 model = SimpleBrokenModel(MASTER_CONFIG)
 
 optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
 
-def train(model, optimizer, scheduler=None, config=MASTER_CONFIG, print_logs=True):
+def train(model, optimizer, scheduler, config, print_logs=True):
     losses = []
     start_time = time.time()
     print(Colors.BOLD + "Training function started at:", datetime.now())
     print(Colors.ENDC)
+    
     for epoch in range(config['epochs']):
+        model.train()  # Ensure model is in training mode
         optimizer.zero_grad()
         
         xs, ys = get_batches(dataset, 'train', config['batch_size'], config['context_window'])
@@ -168,22 +176,24 @@ def train(model, optimizer, scheduler=None, config=MASTER_CONFIG, print_logs=Tru
         optimizer.step()
         forward_end = time.time()
         
-        if scheduler:
-            scheduler.step()
-        
-        if epoch % config['log_interval'] == 0:
-            batch_time = time.time() - start_time
-            x = evaluate_loss(model)
-            losses += [x]
-            if print_logs:
-                print(Colors.OKBLUE + f"Epoch {epoch} | val loss {x['val']:.3f} | "
-                    f"Time {batch_time:.3f} | "
-                    f"Forward Time {forward_end - forward_start:.3f} | "
-                    f"ETA in seconds {batch_time * (config['epochs'] - epoch) / config['log_interval']:.3f}" + Colors.ENDC)
-            start_time = time.time()
+        # Evaluate loss here to use for scheduler
+        if epoch % config['log_interval'] == 0 or epoch == config['epochs'] - 1:
+            val_loss = evaluate_loss(model, config)['val']
+            scheduler.step(val_loss)
+            losses.append({'val': val_loss})  # Correctly appending to losses
 
             if scheduler:
-                print("lr: ", scheduler.get_lr())
+                scheduler.step(val_loss)  # Step scheduler with validation loss
+
+            model.train()  # Switch back to training mode
+            # Log training and validation progress
+            if print_logs:
+                batch_time = time.time() - start_time
+                print(Colors.OKBLUE + f"Epoch {epoch} | val loss {val_loss:.3f} | "
+                      f"Time {batch_time:.3f} | "
+                      f"Forward Time {forward_end - forward_start:.3f} | "
+                      f"ETA in seconds {batch_time * (config['epochs'] - epoch) / config['log_interval']:.3f}" + Colors.ENDC)
+            start_time = time.time()
 
     print(Colors.BOLD)
     print("Training function ended at:", datetime.now())
@@ -191,7 +201,7 @@ def train(model, optimizer, scheduler=None, config=MASTER_CONFIG, print_logs=Tru
     print(Colors.ENDC)
     return pd.DataFrame(losses).plot()
 
-train(model, optimizer)
+train(model, optimizer, scheduler, MASTER_CONFIG)
 
 class SimpleModel(nn.Module):
     def __init__(self, config):
@@ -227,7 +237,7 @@ xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFI
 
 logits, loss = model(xs, ys)
 optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
-train(model, optimizer)
+train(model, optimizer, scheduler, MASTER_CONFIG)
 
 def generate(model, config=MASTER_CONFIG, max_new_tokens=30):
     print("generate started at:", datetime.now())
@@ -331,7 +341,7 @@ xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFI
 
 logits, loss = model(xs, ys)
 optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
-train(model, optimizer)
+train(model, optimizer, scheduler, MASTER_CONFIG)
 
 def get_rotary_matrix(context_window, embedding_dim):
     R = torch.zeros((context_window, embedding_dim, embedding_dim), requires_grad=False)
@@ -369,7 +379,7 @@ for i in range(K):
 
 config = {
     'd_model': 128,
-    'context_window': 32,
+    'context_window': 64,
 }
 
 print(Colors.OKGREEN + "### 'config' Rotary Matrix 02 ###" + Colors.ENDC)
@@ -393,7 +403,7 @@ config = {
     'batch_size': 24,
     'd_model': 128,
     'n_heads': 8,
-    'context_window': 32,
+    'context_window': 64,
 }
 
 print(Colors.OKGREEN + "### 'config' RoPEAttentionHead 01 ###" + Colors.ENDC)
@@ -589,12 +599,19 @@ print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)
 print(Colors.OKGREEN + "###" + Colors.ENDC)
 print("")
 
+MASTER_CONFIG.update({
+    'opt_adam_lr': 5e-5 # 0.00005
+})
+
 model = RopeModel(MASTER_CONFIG)
+optimizer = torch.optim.Adam(model.parameters(), lr=MASTER_CONFIG['opt_adam_lr'])
+scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.9, patience=7, verbose=True)
+
 xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'])
 
 logits, loss = model(xs, ys)
-optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
-train(model, optimizer)
+
+train(model, optimizer, scheduler, MASTER_CONFIG)
 
 generate(model, config=MASTER_CONFIG)
 
@@ -618,7 +635,7 @@ config = {
     'batch_size': 24,
     'd_model': 128,
     'n_heads': 8,
-    'context_window': 32,
+    'context_window': 64,
 }
 
 class RoPEMaskedAttentionHead(nn.Module):
@@ -769,10 +786,10 @@ xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFI
 
 logits, loss = model(xs, ys)
 optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
-train(model, optimizer)
+train(model, optimizer, scheduler, MASTER_CONFIG)
 
 MASTER_CONFIG.update({
-    'epochs': 1000,
+    'epochs': 2000,
     'log_interval': 10,
 })
 
@@ -781,7 +798,7 @@ print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)
 print(Colors.OKGREEN + "###" + Colors.ENDC)
 print("")
 
-train(model, optimizer)
+train(model, optimizer, scheduler, MASTER_CONFIG)
 
 class SwiGLU(nn.Module):
     """
@@ -850,9 +867,11 @@ class RopeModel(nn.Module):
 model = RopeModel(MASTER_CONFIG)
 xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'])
 
+
+
 logits, loss = model(xs, ys)
 optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
-train(model, optimizer)
+train(model, optimizer, scheduler, MASTER_CONFIG)
 
 # add RMSNorm and residual conncection
 class LlamaBlock(nn.Module):
@@ -944,7 +963,10 @@ print("")
 
 llama = Llama(MASTER_CONFIG)
 optimizer = torch.optim.Adam(llama.parameters(),MASTER_CONFIG['opt_adam_lr'])
-train(llama, optimizer, config=MASTER_CONFIG)
+train(llama, optimizer, scheduler, config=MASTER_CONFIG)
+
+optimizer = torch.optim.Adam(model.parameters(), lr=MASTER_CONFIG['opt_adam_lr'])
+scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.7, patience=3, verbose=True)
 
 MASTER_CONFIG.update({
     'epochs': 5000,
@@ -955,12 +977,12 @@ print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)
 print(Colors.OKGREEN + "###" + Colors.ENDC)
 print("")
 
-train(llama, optimizer, scheduler=None, config=MASTER_CONFIG)
+train(llama, optimizer, scheduler, config=MASTER_CONFIG)
 
 MASTER_CONFIG.update({
     'n_layers': 8,
     'd_model': 128,
-    'context_window': 32,
+    'context_window': 64,
     'batch_size': 24,
     'epochs': 10000,
     'n_heads': 8,
@@ -971,7 +993,7 @@ print(Colors.OKGREEN + str(MASTER_CONFIG) + Colors.ENDC)
 print(Colors.OKGREEN + "###" + Colors.ENDC)
 print("")
 
-train(llama, optimizer, config=MASTER_CONFIG)
+train(llama, optimizer, scheduler, config=MASTER_CONFIG)
 
 llama.save_model("llama_model.pth")
 

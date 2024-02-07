@@ -32,7 +32,7 @@ delete_custom_string: check_file
 # Target to merge lines
 merge_lines: check_file
 	@echo "Merging lines..."
-	@awk '{if ($$0 ~ /^(Mirim:|Txai:)/) {if (NR != 1) {print line} line = $$0} else {line = line " " $$0}} END {print line}' $(file) > tmpfile && mv tmpfile $(file) || { echo "Error: Failed to merge lines."; rm -f tmpfile; exit 1; }
+	@awk '{if ($$0 ~ /^(User:|Polaris:)/) {if (NR != 1) {print line} line = $$0} else {line = line " " $$0}} END {print line}' $(file) > tmpfile && mv tmpfile $(file) || { echo "Error: Failed to merge lines."; rm -f tmpfile; exit 1; }
 
 # Target to remove lines containing the phrase "<Arquivo de mídia oculto>"
 remove_media_phrase: check_file

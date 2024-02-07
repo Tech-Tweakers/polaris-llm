@@ -271,7 +271,7 @@ if __name__ == "__main__":
     MASTER_CONFIG = {
         'vocab_size': len(vocab),
         'batch_size': 24,
-        'context_window': 32,
+        'context_window': 64,
         'd_model': 128,
         'n_heads': 8,
         'n_layers': 8
@@ -300,7 +300,7 @@ if __name__ == "__main__":
     if args.user_input:
         user_input = input("> ")
     else:
-        user_input = " "  # Or any default starting string you prefer
+        user_input = "User: Fale sobre filosofia?"  # Or any default starting string you prefer
 
     # Tokenize input
     tokenized_input = [stoi[ch] for ch in user_input if ch in stoi]
