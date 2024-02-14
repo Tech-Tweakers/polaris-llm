@@ -74,8 +74,8 @@ def get_batches(data, split, batch_size, context_window, config=MASTER_CONFIG):
 
 MASTER_CONFIG.update({
     'batch_size': 24,
-    'context_window': 64,
-    'opt_adam_lr': 0.0002
+    'context_window': 32,
+    'opt_adam_lr': 1e-3
 })
 
 xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'])
@@ -139,7 +139,7 @@ xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFI
 logits, loss = model(xs, ys)
 
 MASTER_CONFIG.update({
-    'epochs': 1000,
+    'epochs': 3000,
     'log_interval': 10,
     'batch_size': 24,
     'opt_adam_lr': 1e-3 # 0.001
@@ -155,7 +155,7 @@ scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.7, patience=3, ver
 
 model = SimpleBrokenModel(MASTER_CONFIG)
 
-optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
+# optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
 
 def train(model, optimizer, scheduler, config, print_logs=True):
     losses = []
@@ -236,7 +236,10 @@ model = SimpleModel(MASTER_CONFIG)
 xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'])
 
 logits, loss = model(xs, ys)
-optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
+
+optimizer = torch.optim.Adam(model.parameters(), lr=MASTER_CONFIG['opt_adam_lr'])
+scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.7, patience=3, verbose=True)
+
 train(model, optimizer, scheduler, MASTER_CONFIG)
 
 def generate(model, config=MASTER_CONFIG, max_new_tokens=30):
@@ -340,7 +343,10 @@ model = SimpleModel_RMS(MASTER_CONFIG)
 xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'])
 
 logits, loss = model(xs, ys)
-optimizer = torch.optim.Adam(model.parameters(),MASTER_CONFIG['opt_adam_lr'])
+
+optimizer = torch.optim.Adam(model.parameters(), lr=MASTER_CONFIG['opt_adam_lr'])
+scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.7, patience=3, verbose=True)
+
 train(model, optimizer, scheduler, MASTER_CONFIG)
 
 def get_rotary_matrix(context_window, embedding_dim):
@@ -379,7 +385,7 @@ for i in range(K):
 
 config = {
     'd_model': 128,
-    'context_window': 64,
+    'context_window': 32,
 }
 
 print(Colors.OKGREEN + "### 'config' Rotary Matrix 02 ###" + Colors.ENDC)
@@ -403,7 +409,7 @@ config = {
     'batch_size': 24,
     'd_model': 128,
     'n_heads': 8,
-    'context_window': 64,
+    'context_window': 32,
 }
 
 print(Colors.OKGREEN + "### 'config' RoPEAttentionHead 01 ###" + Colors.ENDC)
@@ -600,7 +606,8 @@ print(Colors.OKGREEN + "###" + Colors.ENDC)
 print("")
 
 MASTER_CONFIG.update({
-    'opt_adam_lr': 5e-5 # 0.00005
+    'opt_adam_lr': 5e-5, # 0.00005
+    'epochs': 2000
 })
 
 model = RopeModel(MASTER_CONFIG)
@@ -635,7 +642,7 @@ config = {
     'batch_size': 24,
     'd_model': 128,
     'n_heads': 8,
-    'context_window': 64,
+    'context_window': 32,
 }
 
 class RoPEMaskedAttentionHead(nn.Module):
@@ -780,6 +787,11 @@ class RopeModel(nn.Module):
 
         else:
             return logits
+
+MASTER_CONFIG.update({
+    'epochs': 1000,
+    'log_interval': 10,
+})
         
 model = RopeModel(MASTER_CONFIG)
 xs, ys = get_batches(dataset, 'train', MASTER_CONFIG['batch_size'], MASTER_CONFIG['context_window'])
@@ -966,10 +978,11 @@ optimizer = torch.optim.Adam(llama.parameters(),MASTER_CONFIG['opt_adam_lr'])
 train(llama, optimizer, scheduler, config=MASTER_CONFIG)
 
 optimizer = torch.optim.Adam(model.parameters(), lr=MASTER_CONFIG['opt_adam_lr'])
-scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.7, patience=3, verbose=True)
+scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.95, patience=10, verbose=True)
 
 MASTER_CONFIG.update({
-    'epochs': 5000,
+    'epochs': 1000,
+    'opt_adam_lr': 5e-5
 })
 
 print(Colors.OKGREEN + "### 'MASTER_CONFIG' Llama Train 01 ###" + Colors.ENDC)
@@ -982,9 +995,9 @@ train(llama, optimizer, scheduler, config=MASTER_CONFIG)
 MASTER_CONFIG.update({
     'n_layers': 8,
     'd_model': 128,
-    'context_window': 64,
+    'context_window': 32,
     'batch_size': 24,
-    'epochs': 10000,
+    'epochs': 1000,
     'n_heads': 8,
 })
 
