@@ -282,7 +282,7 @@ if __name__ == "__main__":
     # Load Model
     #
     
-    model_path = "llama_model.pth"
+    model_path = "small_rnn_model.pth"
     try:
         print(Colors.BOLD + f"Loading Model: {model_path}")
         print(Colors.ENDC)

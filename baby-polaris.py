@@ -57,19 +57,24 @@ class SmallRNNModel(nn.Module):
         return x
 
 vocab_size = len(vocab)
-embed_dim = 32
-hidden_dim = 64
-learning_rate = 0.0005
+embed_dim = 64
+hidden_dim = 128
+learning_rate = 0.001
 epochs = 1
 
+# Initialize the model, criterion, and optimizer as before
 model = SmallRNNModel(vocab_size, embed_dim, hidden_dim)
 criterion = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
-dataset = TextDataset(lines, sequence_length=100)
-dataloader = DataLoader(dataset, batch_size=64, shuffle=True, num_workers=8)
+# Initialize the ReduceLROnPlateau scheduler
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5, factor=0.7, verbose=True)
+
+dataset = TextDataset(lines, sequence_length=10)
+dataloader = DataLoader(dataset, batch_size=32, shuffle=True, num_workers=8)
 
 for epoch in range(epochs):
+    model.train()
     total_loss = 0
     for batch_idx, (inputs, targets) in enumerate(dataloader):
         optimizer.zero_grad()
@@ -84,6 +89,9 @@ for epoch in range(epochs):
 
     avg_loss = total_loss / len(dataloader)
     print(f"{Colors.OKGREEN}Epoch [{epoch+1}] completed. Average Loss: {avg_loss:.4f}{Colors.ENDC}")
+
+    # Step the scheduler after each epoch (or after validation loss calculation)
+    scheduler.step(avg_loss)
 
 print(f"{Colors.BOLD}{Colors.OKGREEN}Training Completed{Colors.ENDC}")
 
