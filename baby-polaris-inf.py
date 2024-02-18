@@ -32,11 +32,12 @@ def encode(s):
     return [stoi.get(ch, 0) for ch in s]  # Use get to avoid KeyErrors
 
 class SmallRNNModel(nn.Module):
-    def __init__(self, vocab_size, embed_dim, hidden_dim):
-        super(SmallRNNModel, self).__init__()
+    def __init__(self, vocab_size, embed_dim, hidden_dim, dropout=0.5, num_layers=2):
+        super().__init__()
         self.embedding = nn.Embedding(vocab_size, embed_dim)
-        self.rnn = nn.LSTM(embed_dim, hidden_dim, batch_first=True)
+        self.rnn = nn.LSTM(embed_dim, hidden_dim, batch_first=True, dropout=dropout, num_layers=num_layers)
         self.fc = nn.Linear(hidden_dim, vocab_size)
+        print(f"{Colors.OKBLUE}SmallRNNModel initialized. Embedding dim: {embed_dim}, Hidden dim: {hidden_dim}, Vocab size: {vocab_size}{Colors.ENDC}")
 
     def forward(self, x):
         x = self.embedding(x)
@@ -89,7 +90,7 @@ def generate_text(seed_text, model, max_length, temperature, top_k, top_p):
             probs = F.softmax(filtered_logits, dim=-1)
             predicted_id = torch.multinomial(probs, num_samples=1).item()
 
-            if itos[predicted_id] == '<END>':  # Assuming '<END>' is your end-of-sequence token
+            if itos[predicted_id] == '\n\n':  
                 print("\n")  # Move to a new line after finishing the generation
                 break
 
@@ -107,8 +108,8 @@ def generate_text(seed_text, model, max_length, temperature, top_k, top_p):
 
 def main(args):
     vocab_size = len(vocab)
-    embed_dim = 64
-    hidden_dim = 128
+    embed_dim = 32
+    hidden_dim = 64
     model = SmallRNNModel(vocab_size, embed_dim, hidden_dim)
 
     try:
